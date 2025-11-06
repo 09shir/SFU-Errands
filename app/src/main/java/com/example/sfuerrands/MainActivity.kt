@@ -58,6 +58,13 @@ class MainActivity : AppCompatActivity() {
                     drawerLayout.closeDrawers()
                     true
                 }
+                R.id.nav_settings -> {
+                    // Open Settings activity
+                    val intent = Intent(this, com.example.sfuerrands.ui.settings.SettingsActivity::class.java)
+                    startActivity(intent)
+                    drawerLayout.closeDrawers()
+                    true
+                }
                 else -> {
                     // Let the default navigation handle other items
                     NavigationUI.onNavDestinationSelected(menuItem, navController)
