@@ -11,6 +11,10 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
+import android.content.Intent
+import androidx.navigation.ui.NavigationUI
+
+
 import com.example.sfuerrands.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -43,10 +47,28 @@ class MainActivity : AppCompatActivity() {
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+
+        // Handle nav drawer hamburger clicks
+        navView.setNavigationItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.nav_jobs -> {
+                    // Open myJobs activity
+                    val intent = Intent(this, com.example.sfuerrands.ui.myjobs.MyJobsActivity::class.java)
+                    startActivity(intent)
+                    drawerLayout.closeDrawers()
+                    true
+                }
+                else -> {
+                    // Let the default navigation handle other items
+                    NavigationUI.onNavDestinationSelected(menuItem, navController)
+                    drawerLayout.closeDrawers()
+                    true
+                }
+            }
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.main, menu)
         return true
     }

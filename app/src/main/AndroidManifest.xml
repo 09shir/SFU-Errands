@@ -27,6 +27,11 @@
             android:exported="false"
             android:label="Job Details"
             android:theme="@style/Theme.SFUerrands.NoActionBar" />
+        <activity
+            android:name=".ui.myjobs.MyJobsActivity"
+            android:exported="false"
+            android:label="My Jobs"
+            android:theme="@style/Theme.SFUerrands.NoActionBar"/>
     </application>
 
 </manifest>
