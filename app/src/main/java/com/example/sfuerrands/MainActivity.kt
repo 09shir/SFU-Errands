@@ -2,6 +2,7 @@ package com.example.sfuerrands
 
 import android.os.Bundle
 import android.view.Menu
+import android.widget.Toast
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.navigation.NavigationView
 import androidx.navigation.findNavController
@@ -62,6 +63,12 @@ class MainActivity : AppCompatActivity() {
                     // Open Settings activity
                     val intent = Intent(this, com.example.sfuerrands.ui.settings.SettingsActivity::class.java)
                     startActivity(intent)
+                    drawerLayout.closeDrawers()
+                    true
+                }
+                R.id.nav_logout -> {
+                    // Show logout toast
+                    Toast.makeText(this, "User logging out...", Toast.LENGTH_SHORT).show()
                     drawerLayout.closeDrawers()
                     true
                 }
