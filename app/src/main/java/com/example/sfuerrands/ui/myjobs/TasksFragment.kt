@@ -36,18 +36,21 @@ class TasksFragment : Fragment() {
         // TODO: these will come from a database later
         val myActiveTasks = listOf(
             Job(
+                id = "1",
                 title = "Return library books",
                 description = "I have 3 books that need to be returned to Bennett Library by 5pm today.",
                 location = "Bennett Library",
                 payment = "$8.00"
             ),
             Job(
+                id = "2",
                 title = "Buy lunch from dining hall",
                 description = "Can someone grab me a sandwich and bring it to the study room?",
                 location = "Maggie Benston Centre",
                 payment = "$7.00"
             ),
             Job(
+                id = "3",
                 title = "Deliver notes from CMPT class",
                 description = "Missed today's lecture. Need notes delivered to my dorm.",
                 location = "TASC Building",

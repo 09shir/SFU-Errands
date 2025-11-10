@@ -37,12 +37,14 @@ class RequestsFragment : Fragment() {
         // TODO: these will come from a database later
         val myPostedJobs = listOf(
             Job(
+                id = "1",
                 title = "Pick up coffee from Tim Hortons",
                 description = "Need someone to grab me a medium coffee. Will meet you at the library.",
                 location = "AQ Building",
                 payment = "$5.00"
             ),
             Job(
+                id = "2",
                 title = "Print assignment",
                 description = "Need 10 pages printed. I'll send you the PDF.",
                 location = "Library",
