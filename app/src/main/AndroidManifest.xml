@@ -37,6 +37,12 @@
             android:exported="false"
             android:label="Settings"
             android:theme="@style/Theme.SFUerrands.NoActionBar"/>
+        <activity
+            android:name=".ui.myjobs.CreateJobActivity"
+            android:exported="false"
+            android:label="Create Job"
+            android:parentActivityName=".ui.myjobs.MyJobsActivity"
+            android:theme="@style/Theme.SFUerrands.NoActionBar"/>
     </application>
 
 </manifest>

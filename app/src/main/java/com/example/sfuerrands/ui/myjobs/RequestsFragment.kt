@@ -1,5 +1,6 @@
 package com.example.sfuerrands.ui.myjobs
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -30,6 +31,11 @@ class RequestsFragment : Fragment() {
 
         // Set up the RecyclerView with sample jobs YOU posted
         setupRecyclerView()
+
+        // Set up the Create Job button
+        binding.createJobButton.setOnClickListener {
+            openCreateJobForm()
+        }
     }
 
     private fun setupRecyclerView() {
@@ -56,6 +62,12 @@ class RequestsFragment : Fragment() {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapter
         }
+    }
+
+    private fun openCreateJobForm() {
+        // Open the CreateJobActivity
+        val intent = Intent(requireContext(), CreateJobActivity::class.java)
+        startActivity(intent)
     }
 
     override fun onDestroyView() {
