@@ -2,6 +2,7 @@ package com.example.sfuerrands.ui.auth
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -42,9 +43,20 @@ class LoginActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 try {
                     authRepo.signIn(email, pass)
-                    goMain()
+
+                    val verified = authRepo.isEmailVerifiedFresh()
+                    if (!verified) {
+                        // Stay signed in so they can tap “Resend”, but don’t let them into Main
+                        startActivity(Intent(this@LoginActivity, VerifyEmailActivity::class.java))
+                        finish(); return@launch
+                    }
+
+                    // Verified → Main
+                    startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+                    finish()
                 } catch (e: Exception) {
                     setLoading(false)
+                    Log.d("SignIn", "Error during sign in", e)
                     toast(e.message ?: "Sign in failed")
                 }
             }
@@ -60,13 +72,22 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            if (!isSfuEmail(email)) {
+                toast("Please use a valid SFU email address.")
+                return@setOnClickListener
+            }
+
             setLoading(true)
             lifecycleScope.launch {
                 try {
-                    authRepo.signUp(email, pass, name, campuses = emptyList())
-                    goMain()
+                    authRepo.signUpAndSendVerification(email, pass, name)
+                    // Navigate to a VerifyEmailActivity
+                    startActivity(Intent(this@LoginActivity, VerifyEmailActivity::class.java)
+                        .putExtra("displayName", name))
+                    finish()
                 } catch (e: Exception) {
                     setLoading(false)
+                    Log.d("SignUp", "Error during sign up", e)
                     toast(e.message ?: "Sign up failed")
                 }
             }
@@ -92,10 +113,9 @@ class LoginActivity : AppCompatActivity() {
         binding.btnSignUp.isEnabled = !loading
     }
 
-    private fun goMain() {
-        startActivity(Intent(this, MainActivity::class.java))
-        finish()
-    }
+    fun isSfuEmail(email: String): Boolean =
+        email.lowercase().matches(Regex("^[A-Z0-9._%+-]+@(?:sfu\\.ca|g\\.sfu\\.ca)$", RegexOption.IGNORE_CASE))
+
 
     private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
 }

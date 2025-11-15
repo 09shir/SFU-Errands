@@ -16,84 +16,106 @@ import android.content.Intent
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.ui.NavigationUI
 import com.example.sfuerrands.data.repository.AuthRepository
-
+import com.google.firebase.auth.auth
 
 import com.example.sfuerrands.databinding.ActivityMainBinding
 import com.example.sfuerrands.ui.auth.LoginActivity
+import com.example.sfuerrands.ui.auth.VerifyEmailActivity
+import com.google.firebase.Firebase
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
+    private val auth = Firebase.auth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // authentication
-        val authRepo = com.example.sfuerrands.data.repository.AuthRepository()
-        if (!authRepo.isSignedIn()) {
-            startActivity(Intent(this, com.example.sfuerrands.ui.auth.LoginActivity::class.java))
-            finish()
-            return
-        }
+        lifecycleScope.launch {
+            val u = auth.currentUser
+            val authRepo = AuthRepository()
 
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+            if (u == null) {
+                startActivity(Intent(this@MainActivity, LoginActivity::class.java))
+                finish(); return@launch
+            }
 
-        setSupportActionBar(binding.appBarMain.toolbar)
+            // Refresh profile & token; check verification
+            val verified = try { authRepo.isEmailVerifiedFresh() } catch (e: Exception) { false }
 
-        binding.appBarMain.fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null)
-                .setAnchorView(R.id.fab).show()
-        }
-        val drawerLayout: DrawerLayout = binding.drawerLayout
-        val navView: NavigationView = binding.navView
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-        appBarConfiguration = AppBarConfiguration(
-            setOf(
-                R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow
-            ), drawerLayout
-        )
-        setupActionBarWithNavController(navController, appBarConfiguration)
-        navView.setupWithNavController(navController)
+            if (!verified) {
+                // Don’t inflate main UI; go to verify screen instead
+                startActivity(
+                    Intent(this@MainActivity, VerifyEmailActivity::class.java)
+                        .putExtra("displayName", u.displayName ?: "")
+                )
+                finish(); return@launch
+            }
 
-        // Handle nav drawer hamburger clicks
-        navView.setNavigationItemSelectedListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.nav_jobs -> {
-                    // Open myJobs activity
-                    val intent = Intent(this, com.example.sfuerrands.ui.myjobs.MyJobsActivity::class.java)
-                    startActivity(intent)
-                    drawerLayout.closeDrawers()
-                    true
-                }
-                R.id.nav_settings -> {
-                    // Open Settings activity
-                    val intent = Intent(this, com.example.sfuerrands.ui.settings.SettingsActivity::class.java)
-                    startActivity(intent)
-                    drawerLayout.closeDrawers()
-                    true
-                }
-                R.id.nav_logout -> {
-                    // Show logout toast
-                    Toast.makeText(this, "User logging out...", Toast.LENGTH_SHORT).show()
-                    lifecycleScope.launch {
-                        AuthRepository().signOut()
-                        startActivity(Intent(this@MainActivity, LoginActivity::class.java))
-                        finish()
+            // Verified: ensure /users/{uid} exists, then show main UI
+            try {
+                authRepo.createUserDocIfMissing(displayName = u.displayName ?: "")
+            } catch (_: Exception) { /* optional: toast/log */ }
+
+            binding = ActivityMainBinding.inflate(layoutInflater)
+            setContentView(binding.root)
+
+            setSupportActionBar(binding.appBarMain.toolbar)
+
+            binding.appBarMain.fab.setOnClickListener { view ->
+                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null)
+                    .setAnchorView(R.id.fab).show()
+            }
+            val drawerLayout: DrawerLayout = binding.drawerLayout
+            val navView: NavigationView = binding.navView
+            val navController = findNavController(R.id.nav_host_fragment_content_main)
+            // Passing each menu ID as a set of Ids because each
+            // menu should be considered as top level destinations.
+            appBarConfiguration = AppBarConfiguration(
+                setOf(
+                    R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow
+                ), drawerLayout
+            )
+            setupActionBarWithNavController(navController, appBarConfiguration)
+            navView.setupWithNavController(navController)
+
+            // Handle nav drawer hamburger clicks
+            navView.setNavigationItemSelectedListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.nav_jobs -> {
+                        // Open myJobs activity
+                        val intent = Intent(this@MainActivity, com.example.sfuerrands.ui.myjobs.MyJobsActivity::class.java)
+                        startActivity(intent)
+                        drawerLayout.closeDrawers()
+                        true
                     }
-                    drawerLayout.closeDrawers()
-                    true
-                }
-                else -> {
-                    // Let the default navigation handle other items
-                    NavigationUI.onNavDestinationSelected(menuItem, navController)
-                    drawerLayout.closeDrawers()
-                    true
+                    R.id.nav_settings -> {
+                        // Open Settings activity
+                        val intent = Intent(this@MainActivity, com.example.sfuerrands.ui.settings.SettingsActivity::class.java)
+                        startActivity(intent)
+                        drawerLayout.closeDrawers()
+                        true
+                    }
+                    R.id.nav_logout -> {
+                        // Show logout toast
+                        Toast.makeText(this@MainActivity, "User logging out...", Toast.LENGTH_SHORT).show()
+                        lifecycleScope.launch {
+                            AuthRepository().signOut()
+                            startActivity(Intent(this@MainActivity, LoginActivity::class.java))
+                            finish()
+                        }
+                        drawerLayout.closeDrawers()
+                        true
+                    }
+                    else -> {
+                        // Let the default navigation handle other items
+                        NavigationUI.onNavDestinationSelected(menuItem, navController)
+                        drawerLayout.closeDrawers()
+                        true
+                    }
                 }
             }
         }

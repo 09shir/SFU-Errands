@@ -39,7 +39,11 @@
             android:theme="@style/Theme.SFUerrands.NoActionBar"/>
         <activity android:name=".ui.auth.LoginActivity"
             android:exported="false"
-            android:label="Authenticate"
+            android:label="Login"
+            android:theme="@style/Theme.SFUerrands.NoActionBar"/>
+        <activity android:name=".ui.auth.VerifyEmailActivity"
+            android:exported="false"
+            android:label="Verify Email"
             android:theme="@style/Theme.SFUerrands.NoActionBar"/>
     </application>
 
