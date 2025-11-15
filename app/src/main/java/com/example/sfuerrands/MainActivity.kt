@@ -13,10 +13,14 @@ import androidx.navigation.ui.setupWithNavController
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
 import android.content.Intent
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.ui.NavigationUI
+import com.example.sfuerrands.data.repository.AuthRepository
 
 
 import com.example.sfuerrands.databinding.ActivityMainBinding
+import com.example.sfuerrands.ui.auth.LoginActivity
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,6 +29,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // authentication
+        val authRepo = com.example.sfuerrands.data.repository.AuthRepository()
+        if (!authRepo.isSignedIn()) {
+            startActivity(Intent(this, com.example.sfuerrands.ui.auth.LoginActivity::class.java))
+            finish()
+            return
+        }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -69,6 +81,11 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_logout -> {
                     // Show logout toast
                     Toast.makeText(this, "User logging out...", Toast.LENGTH_SHORT).show()
+                    lifecycleScope.launch {
+                        AuthRepository().signOut()
+                        startActivity(Intent(this@MainActivity, LoginActivity::class.java))
+                        finish()
+                    }
                     drawerLayout.closeDrawers()
                     true
                 }
