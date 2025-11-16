@@ -11,7 +11,7 @@ import android.content.Intent
 import com.example.sfuerrands.R
 
 // This adapter connects our list of jobs to the RecyclerView
-class JobAdapter(private val jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.JobViewHolder>() {
+class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.JobViewHolder>() {
 
     // ViewHolder holds the views for each job item
     class JobViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -31,7 +31,7 @@ class JobAdapter(private val jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
     // Puts the data into the ViewHolder
     override fun onBindViewHolder(holder: JobViewHolder, position: Int) {
         val job = jobs[position]  // Get the job at this position
-        
+
         // Set the text for each TextView
         holder.titleTextView.text = job.title
         holder.descriptionTextView.text = job.description
@@ -44,6 +44,7 @@ class JobAdapter(private val jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
             val intent = Intent(holder.itemView.context, JobDetailActivity::class.java)
 
             // init the intent
+            intent.putExtra("JOB_ID", job.id)
             intent.putExtra("JOB_TITLE", job.title)
             intent.putExtra("JOB_DESCRIPTION", job.description)
             intent.putExtra("JOB_LOCATION", job.location)
@@ -55,4 +56,9 @@ class JobAdapter(private val jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
     }
 
     override fun getItemCount(): Int = jobs.size
+
+    fun submitList(newJobs: List<Job>) {
+        jobs = newJobs
+        notifyDataSetChanged() // fine for MVP; later you can use DiffUtil
+    }
 }

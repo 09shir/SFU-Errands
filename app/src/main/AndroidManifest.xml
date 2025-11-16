@@ -37,6 +37,13 @@
             android:exported="false"
             android:label="Settings"
             android:theme="@style/Theme.SFUerrands.NoActionBar"/>
+        <activity android:name=".ui.auth.LoginActivity"
+            android:exported="false"
+            android:label="Login"
+            android:theme="@style/Theme.SFUerrands.NoActionBar"/>
+        <activity android:name=".ui.auth.VerifyEmailActivity"
+            android:exported="false"
+            android:label="Verify Email"/>
         <activity
             android:name=".ui.myjobs.CreateJobActivity"
             android:exported="false"
