@@ -7,18 +7,30 @@
     <!-- Title for the Requests tab -->
     <TextView
         android:id="@+id/requestsTitle"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
+        android:layout_marginEnd="8dp"
         android:text="Jobs I Posted"
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="@android:color/black"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/createJobButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Create Job Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/createJobButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:text="Create Job"
+        app:icon="@android:drawable/ic_input_add"
+        app:layout_constraintBottom_toBottomOf="@id/requestsTitle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/requestsTitle" />
 
     <!-- RecyclerView to show jobs you posted -->
     <androidx.recyclerview.widget.RecyclerView

@@ -44,6 +44,11 @@
         <activity android:name=".ui.auth.VerifyEmailActivity"
             android:exported="false"
             android:label="Verify Email"
+        <activity
+            android:name=".ui.myjobs.CreateJobActivity"
+            android:exported="false"
+            android:label="Create Job"
+            android:parentActivityName=".ui.myjobs.MyJobsActivity"
             android:theme="@style/Theme.SFUerrands.NoActionBar"/>
     </application>
 
