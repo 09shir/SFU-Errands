@@ -3,7 +3,9 @@ package com.example.sfuerrands.data.repository
 import com.example.sfuerrands.data.models.Errand
 import com.example.sfuerrands.data.models.ErrandQuery
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.MetadataChanges
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
 import com.google.firebase.Firebase
@@ -87,8 +89,6 @@ class ErrandRepository {
         return snap.toObject(Errand::class.java)
     }
 
-    // ---------- CREATE / UPDATE / DELETE ----------
-
     /**
      * Create a new errand. Returns the generated document ID.
      */
@@ -130,4 +130,55 @@ class ErrandRepository {
             )
         )
     }
+
+    /**
+     * Listen to a single errand doc and get real-time updates.
+     *
+     * @param includeLocal Whether to receive local (pending writes) events too.
+     *                     If false, only server-committed updates trigger.
+     */
+    fun listenErrandById(
+        id: String,
+        includeLocal: Boolean = false,
+        onChange: (errand: Errand?, hasPendingWrites: Boolean) -> Unit,
+        onError: (Exception) -> Unit
+    ): ListenerRegistration {
+        val docRef = errandsCollection.document(id)
+        val metadataMode = if (includeLocal) MetadataChanges.INCLUDE else MetadataChanges.EXCLUDE
+
+        return docRef.addSnapshotListener(metadataMode) { snap: DocumentSnapshot?, e ->
+            if (e != null) { onError(e); return@addSnapshotListener }
+
+            val hasPending = snap?.metadata?.hasPendingWrites() == true
+            if (snap != null && snap.exists()) {
+                onChange(snap.toObject(Errand::class.java), hasPending)
+            } else {
+                // Document was deleted or never existed
+                onChange(null, hasPending)
+            }
+        }
+    }
+
+// Example usage of listenErrandById() in an Activity/Fragment:
+
+//    private var errandReg: ListenerRegistration? = null
+//
+//    override fun onStart() {
+//        super.onStart()
+//        errandReg = errandRepository.listenErrandById(
+//            id = errandId,
+//            includeLocal = true,
+//            onChange = { errand, pending ->
+//                // Update UI with latest errand
+//                // e.g., titleView.text = errand?.title ?: "(deleted)"
+//            },
+//            onError = { e -> Log.e("Errand", "Listen error", e) }
+//        )
+//    }
+//
+//    override fun onStop() {
+//        super.onStop()
+//        errandReg?.remove()
+//        errandReg = null
+//    }
 }
