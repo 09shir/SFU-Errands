@@ -28,18 +28,10 @@ class ErrandRepository {
     ): ListenerRegistration {
         var q: Query = errandsCollection
 
-        // Apply filters only if provided
         query.status?.let { q = q.whereEqualTo("status", it) }
         query.campus?.let { q = q.whereEqualTo("campus", it) }
         query.requesterId?.let { q = q.whereEqualTo("requesterId", it) }
         query.runnerId?.let { q = q.whereEqualTo("runnerId", it) }
-
-        // Ordering
-//        q = if (query.orderByCreatedAtDesc) {
-//            q.orderBy("createdAt", Query.Direction.DESCENDING)
-//        } else {
-//            q.orderBy("createdAt", Query.Direction.ASCENDING)
-//        }
 
         if (query.orderByCreatedAtDesc) q = q.orderBy("createdAt", Query.Direction.DESCENDING)
         if (query.orderByCreatedAtAsc) q = q.orderBy("createdAt", Query.Direction.ASCENDING)
