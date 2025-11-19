@@ -8,6 +8,8 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.sfuerrands.data.models.Errand
+import com.example.sfuerrands.data.models.ErrandQuery
+import com.example.sfuerrands.data.repository.ErrandRepository
 import com.example.sfuerrands.databinding.FragmentHomeBinding
 import com.google.firebase.firestore.firestore
 import com.google.firebase.Firebase
@@ -19,6 +21,7 @@ class HomeFragment : Fragment() {
     private val db = Firebase.firestore
     private lateinit var jobAdapter: JobAdapter
     private var errandsListener: ListenerRegistration? = null
+    private val errandRepository = ErrandRepository()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -31,7 +34,6 @@ class HomeFragment : Fragment() {
         // Set up the RecyclerView
         setupRecyclerView()
         listenForErrands()
-
         return root
     }
 
@@ -51,39 +53,32 @@ class HomeFragment : Fragment() {
     }
 
     private fun listenForErrands() {
-        // Show loading state if you have one
-        // binding.progressBar.isVisible = true
-
-        errandsListener = db.collection("errands")
-            .whereEqualTo("status", "open")
-            // optionally filter by campus:
-            // .whereEqualTo("campus", "burnaby")
-            .orderBy("createdAt") // or createdAt desc (needs composite index)
-            .addSnapshotListener { snapshot, error ->
-                // binding.progressBar.isVisible = false
-
-                if (error != null || snapshot == null) {
-                    Log.e("HomeFragment", "Firestore error", error)
-                    return@addSnapshotListener
-                }
-
-                val errands = snapshot.toObjects(Errand::class.java)
-
+        val query = ErrandQuery(
+            status = "open",
+            orderByCreatedAtDesc = true,
+        )
+        errandsListener?.remove()
+        errandsListener = errandRepository.listenErrands(
+            query = query,
+            onSuccess = { errands ->
                 Log.d("HomeFragment", "Got ${errands.size} errands")
-
-                // Map Errand → Job (UI model)
-                val jobs = errands.map { errand ->
+                val jobs = errands.map { e ->
                     Job(
-                        id = errand.id,
-                        title = errand.title,
-                        description = errand.description,
-                        location = errand.campus, // or some location string
-                        payment = errand.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "TBD"
+                        id = e.id,
+                        title = e.title,
+                        description = e.description,
+                        location = e.campus,
+                        payment = e.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "$0.00",
                     )
                 }
-
                 jobAdapter.submitList(jobs)
+            },
+            onError = { e ->
+                Log.e("HomeFragment", "Errands listen error", e)
+                // TODO: show an empty/error state if you have one
+                jobAdapter.submitList(emptyList())
             }
+        )
     }
 
     override fun onDestroyView() {
