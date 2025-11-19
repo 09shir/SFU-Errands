@@ -35,11 +35,14 @@ class ErrandRepository {
         query.runnerId?.let { q = q.whereEqualTo("runnerId", it) }
 
         // Ordering
-        q = if (query.orderByCreatedAtDesc) {
-            q.orderBy("createdAt", Query.Direction.DESCENDING)
-        } else {
-            q.orderBy("createdAt", Query.Direction.ASCENDING)
-        }
+//        q = if (query.orderByCreatedAtDesc) {
+//            q.orderBy("createdAt", Query.Direction.DESCENDING)
+//        } else {
+//            q.orderBy("createdAt", Query.Direction.ASCENDING)
+//        }
+
+        if (query.orderByCreatedAtDesc) q = q.orderBy("createdAt", Query.Direction.DESCENDING)
+        if (query.orderByCreatedAtAsc) q = q.orderBy("createdAt", Query.Direction.ASCENDING)
 
         // Optional limit
         query.limit?.let { q = q.limit(it) }
@@ -87,8 +90,6 @@ class ErrandRepository {
         return snap.toObject(Errand::class.java)
     }
 
-    // ---------- CREATE / UPDATE / DELETE ----------
-
     /**
      * Create a new errand. Returns the generated document ID.
      */
@@ -130,4 +131,5 @@ class ErrandRepository {
             )
         )
     }
+
 }

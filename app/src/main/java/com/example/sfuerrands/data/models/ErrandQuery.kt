@@ -7,5 +7,6 @@ data class ErrandQuery(
     val requesterId: String? = null,
     val runnerId: String? = null,
     val limit: Long? = null,
-    val orderByCreatedAtDesc: Boolean = true
+    val orderByCreatedAtDesc: Boolean = false,
+    val orderByCreatedAtAsc: Boolean = false
 )
