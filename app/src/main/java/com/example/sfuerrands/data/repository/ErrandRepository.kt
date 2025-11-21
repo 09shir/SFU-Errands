@@ -57,7 +57,15 @@ class ErrandRepository {
                 return@addSnapshotListener
             }
 
-            val errands = snapshot.toObjects(Errand::class.java)
+            // Safely convert documents, handling both old and new formats
+            val errands = snapshot.documents.mapNotNull { doc ->
+                try {
+                    doc.toObject(Errand::class.java)
+                } catch (e: Exception) {
+                    // Skip documents with incompatible format
+                    null
+                }
+            }
             onSuccess(errands)
         }
     }
@@ -94,12 +102,8 @@ class ErrandRepository {
      * Create a new errand. Returns the generated document ID.
      */
     suspend fun createErrand(errand: Errand): String {
-        val now = Timestamp.now()
-        val toSave = errand.copy(
-            createdAt = now,
-            updatedAt = now
-        )
-        val docRef = errandsCollection.add(toSave).await()
+        // Don't override createdAt - use what's passed in
+        val docRef = errandsCollection.add(errand).await()
         return docRef.id
     }
 
