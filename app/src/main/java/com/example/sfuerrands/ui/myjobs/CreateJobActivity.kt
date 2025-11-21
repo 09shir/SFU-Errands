@@ -15,6 +15,7 @@ import com.example.sfuerrands.data.repository.ErrandRepository
 import com.example.sfuerrands.databinding.ActivityCreateJobBinding
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -174,9 +175,13 @@ class CreateJobActivity : AppCompatActivity() {
         // Show loading state
         binding.submitButton.text = "Creating..."
 
+        // Create DocumentReference for the current user
+        val db = FirebaseFirestore.getInstance()
+        val requesterRef = db.collection("users").document(currentUserId)
+
         // Create the Errand object
         val errand = Errand(
-            requesterId = currentUserId,
+            requesterId = requesterRef,
             title = title,
             description = description,
             campus = campus.lowercase(), // Store as lowercase in DB
