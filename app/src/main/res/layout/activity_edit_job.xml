@@ -4,7 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- AppBar with Toolbar -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -19,7 +18,6 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- ScrollView to contain the form -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -32,7 +30,17 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Title Input -->
+            <TextView
+                android:id="@+id/warningTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="This errand has been claimed and can no longer be edited."
+                android:textColor="#D32F2F"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:visibility="gone"
+                android:layout_marginBottom="16dp"/>
+
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -49,7 +57,6 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Description Input (multiline) -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -69,23 +76,22 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Campus Dropdown -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 android:hint="Campus"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+                app:boxBackgroundMode="outline">
 
-                <AutoCompleteTextView
-                    android:id="@+id/campusDropdown"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/campusEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="none" />
+                    android:inputType="text"
+                    android:maxLines="1" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Price Offered Input (numeric) -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -103,52 +109,32 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Location Input (Optional) -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:hint="Location (Optional)"
-                app:boxBackgroundMode="outline"
-                app:helperText="e.g., AQ Building, Room 123">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/locationEditText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="text"
-                    android:maxLines="2" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Expected Completion Date (Optional) -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:hint="Expected Completion (Optional)"
-                app:boxBackgroundMode="outline"
-                app:endIconMode="custom"
-                app:endIconDrawable="@android:drawable/ic_menu_my_calendar">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/expectedCompletionEditText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="none"
-                    android:focusable="false"
-                    android:clickable="true"
-                    android:maxLines="1" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Submit Button -->
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/submitButton"
+                android:id="@+id/saveButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:text="Create Job"
+                android:padding="12dp"
+                android:text="Save Changes"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/deleteButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:text="Delete Job"
+                android:textSize="16sp"
+                app:backgroundTint="#D32F2F"
+                android:layout_marginBottom="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/backButton"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:text="Back"
                 android:textSize="16sp" />
 
         </LinearLayout>

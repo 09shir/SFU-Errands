@@ -9,6 +9,7 @@ import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.ActionCodeSettings
 import com.google.firebase.auth.FirebaseAuthException
 import kotlinx.coroutines.tasks.await
+import com.example.sfuerrands.data.models.User
 
 class AuthRepository {
 
@@ -17,6 +18,17 @@ class AuthRepository {
 
     fun currentUid(): String? = auth.currentUser?.uid
     fun isSignedIn(): Boolean = auth.currentUser != null
+    /**
+     * Get user document by UID
+     */
+    suspend fun getUserById(uid: String): User? {
+        return try {
+            val doc = db.collection("users").document(uid).get().await()
+            doc.toObject(User::class.java)
+        } catch (e: Exception) {
+            null
+        }
+    }
     suspend fun signOut() { auth.signOut() }
 
     /**

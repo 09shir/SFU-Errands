@@ -52,6 +52,10 @@
             android:theme="@style/Theme.SFUerrands.NoActionBar"/>
         <activity android:name=".ui.preview.ImagePreviewActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+        <activity
+            android:name=".ui.myjobs.EditJobActivity"
+            android:parentActivityName=".ui.myjobs.MyJobsActivity"
+            android:theme="@style/Theme.SFUerrands.NoActionBar" />
     </application>
 
 </manifest>
