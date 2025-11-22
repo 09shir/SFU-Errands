@@ -110,4 +110,12 @@ class StorageRepository {
 
     suspend fun downloadUrlForPath(storagePath: String): String =
         Firebase.storage.reference.child(storagePath).downloadUrl.await().toString()
+
+    suspend fun resolveToUrl(path: String): String? = runCatching {
+        when {
+            path.startsWith("http", true) -> path
+            path.startsWith("gs://", true) -> Firebase.storage.getReferenceFromUrl(path).downloadUrl.await().toString()
+            else -> downloadUrlForPath(path) // e.g. "errand_medias/.."
+        }
+    }.getOrNull()
 }

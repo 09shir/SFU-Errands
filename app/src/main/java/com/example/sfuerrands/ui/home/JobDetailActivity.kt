@@ -1,5 +1,4 @@
 package com.example.sfuerrands.ui.home
-import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -7,10 +6,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.sfuerrands.data.repository.StorageRepository
 import com.example.sfuerrands.databinding.ActivityJobDetailBinding
-import com.example.sfuerrands.ui.preview.ImagePreviewActivity
+import com.example.sfuerrands.ui.preview.ImagePreviewNavigator
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
-import com.google.firebase.storage.storage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
@@ -58,21 +56,20 @@ class JobDetailActivity : AppCompatActivity() {
 
         // Media gallery setup
         mediaAdapter = MediaAdapter(emptyList()) { position, _ ->
-            val ctx = this@JobDetailActivity
-            val intent = Intent(ctx, ImagePreviewActivity::class.java).apply {
-                putStringArrayListExtra(
-                    ImagePreviewActivity.EXTRA_URLS,
-                    ArrayList(currentMediaUrls)
-                )
-                putExtra(ImagePreviewActivity.EXTRA_START_INDEX, position)
-            }
-            startActivity(intent)
+            ImagePreviewNavigator.open(
+                context = this@JobDetailActivity,
+                urls = currentMediaUrls,
+                startIndex = position
+            )
         }
 
 //        mediaAdapter = MediaAdapter(emptyList())
         binding.mediaRecycler.apply {
-            layoutManager =
-                LinearLayoutManager(this@JobDetailActivity, LinearLayoutManager.HORIZONTAL, false)
+            layoutManager = LinearLayoutManager(
+                this@JobDetailActivity,
+                LinearLayoutManager.HORIZONTAL,
+                false
+            )
             adapter = mediaAdapter
         }
 
@@ -83,7 +80,7 @@ class JobDetailActivity : AppCompatActivity() {
             // Resolve to download URLs in parallel
             lifecycleScope.launch {
                 Firebase.auth.currentUser?.getIdToken(true)?.await()
-                val urls = mediaPaths.map { p -> async { resolveToUrl(p) } }.awaitAll()
+                val urls = mediaPaths.map { p -> async { storageRepository.resolveToUrl(p) } }.awaitAll()
                     .filterNotNull()
                 if (urls.isEmpty()) {
                     binding.mediaRecycler.visibility = View.GONE
@@ -95,12 +92,4 @@ class JobDetailActivity : AppCompatActivity() {
             }
         }
     }
-
-    private suspend fun resolveToUrl(path: String): String? = runCatching {
-        when {
-            path.startsWith("http", true) -> path
-            path.startsWith("gs://", true) -> Firebase.storage.getReferenceFromUrl(path).downloadUrl.await().toString()
-            else -> storageRepository.downloadUrlForPath(path) // e.g. "errand_medias/.."
-        }
-    }.getOrNull()
 }
