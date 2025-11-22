@@ -5,5 +5,6 @@ data class Job(
     val title: String,
     val description: String,
     val location: String,
-    val payment: String
+    val payment: String,
+    val mediaPaths: List<String> = emptyList()
 )

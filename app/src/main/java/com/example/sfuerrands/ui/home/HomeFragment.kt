@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.sfuerrands.data.models.Errand
 import com.example.sfuerrands.data.models.ErrandQuery
 import com.example.sfuerrands.data.repository.ErrandRepository
 import com.example.sfuerrands.databinding.FragmentHomeBinding
@@ -69,6 +68,7 @@ class HomeFragment : Fragment() {
                         description = e.description,
                         location = e.campus,
                         payment = e.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "$0.00",
+                        mediaPaths = e.medias
                     )
                 }
                 jobAdapter.submitList(jobs)

@@ -50,6 +50,8 @@
             android:label="Create Job"
             android:parentActivityName=".ui.myjobs.MyJobsActivity"
             android:theme="@style/Theme.SFUerrands.NoActionBar"/>
+        <activity android:name=".ui.preview.ImagePreviewActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
     </application>
 
 </manifest>

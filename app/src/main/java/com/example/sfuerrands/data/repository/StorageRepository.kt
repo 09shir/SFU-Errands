@@ -107,4 +107,7 @@ class StorageRepository {
         val result = ref.list(maxResults).await()
         return result.items.map { it.path.removePrefix("/") }
     }
+
+    suspend fun downloadUrlForPath(storagePath: String): String =
+        Firebase.storage.reference.child(storagePath).downloadUrl.await().toString()
 }
