@@ -3,6 +3,7 @@ package com.example.sfuerrands.data.repository
 import com.example.sfuerrands.data.models.Errand
 import com.example.sfuerrands.data.models.ErrandQuery
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
@@ -35,12 +36,6 @@ class ErrandRepository {
         query.runnerId?.let { q = q.whereEqualTo("runnerId", it) }
 
         // Ordering
-//        q = if (query.orderByCreatedAtDesc) {
-//            q.orderBy("createdAt", Query.Direction.DESCENDING)
-//        } else {
-//            q.orderBy("createdAt", Query.Direction.ASCENDING)
-//        }
-
         if (query.orderByCreatedAtDesc) q = q.orderBy("createdAt", Query.Direction.DESCENDING)
         if (query.orderByCreatedAtAsc) q = q.orderBy("createdAt", Query.Direction.ASCENDING)
 
@@ -57,7 +52,15 @@ class ErrandRepository {
                 return@addSnapshotListener
             }
 
-            val errands = snapshot.toObjects(Errand::class.java)
+            // Safely convert documents, handling both old and new formats
+            val errands = snapshot.documents.mapNotNull { doc ->
+                try {
+                    doc.toObject(Errand::class.java)
+                } catch (e: Exception) {
+                    // Skip documents with incompatible format
+                    null
+                }
+            }
             onSuccess(errands)
         }
     }
@@ -94,12 +97,8 @@ class ErrandRepository {
      * Create a new errand. Returns the generated document ID.
      */
     suspend fun createErrand(errand: Errand): String {
-        val now = Timestamp.now()
-        val toSave = errand.copy(
-            createdAt = now,
-            updatedAt = now
-        )
-        val docRef = errandsCollection.add(toSave).await()
+        // Don't override createdAt - use what's passed in
+        val docRef = errandsCollection.add(errand).await()
         return docRef.id
     }
 
@@ -122,11 +121,12 @@ class ErrandRepository {
     /**
      * Example: claim an errand (runner accepts it) – simple version, not using transactions yet.
      */
-    suspend fun claimErrand(id: String, runnerId: String) {
+    suspend fun claimErrand(id: String, runnerUid: String) {
+        val runnerRef = db.collection("users").document(runnerUid)
         updateErrand(
             id,
             mapOf(
-                "runnerId" to runnerId,
+                "runnerId" to runnerRef,
                 "status" to "claimed"
             )
         )
