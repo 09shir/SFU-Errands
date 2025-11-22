@@ -60,6 +60,20 @@ class RequestsFragment : Fragment() {
 
         val adapter = JobAdapter(myPostedJobs)
 
+        // --- NEW LOGIC: Override the click to open "Edit Job" instead of "View Job" ---
+        adapter.onJobClickListener = { job ->
+            val intent = Intent(requireContext(), EditJobActivity::class.java)
+
+            // Pass the existing data to the edit screen so we can pre-fill the text boxes
+            intent.putExtra("JOB_TITLE", job.title)
+            intent.putExtra("JOB_DESCRIPTION", job.description)
+            intent.putExtra("JOB_LOCATION", job.location)
+            intent.putExtra("JOB_PAYMENT", job.payment) // Make sure to parse the '$' out later if needed
+
+            startActivity(intent)
+        }
+        // ---------------------------------------------------------------------------
+
         binding.requestsRecyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = adapter
