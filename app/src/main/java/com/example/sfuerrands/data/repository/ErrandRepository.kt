@@ -36,12 +36,6 @@ class ErrandRepository {
         query.runnerId?.let { q = q.whereEqualTo("runnerId", it) }
 
         // Ordering
-//        q = if (query.orderByCreatedAtDesc) {
-//            q.orderBy("createdAt", Query.Direction.DESCENDING)
-//        } else {
-//            q.orderBy("createdAt", Query.Direction.ASCENDING)
-//        }
-
         if (query.orderByCreatedAtDesc) q = q.orderBy("createdAt", Query.Direction.DESCENDING)
         if (query.orderByCreatedAtAsc) q = q.orderBy("createdAt", Query.Direction.ASCENDING)
 
@@ -133,7 +127,8 @@ class ErrandRepository {
             id,
             mapOf(
                 "runnerId" to runnerRef,
-                "status" to "claimed"
+                "status" to "claimed",
+                "claimedAt" to Timestamp.now()
             )
         )
     }
