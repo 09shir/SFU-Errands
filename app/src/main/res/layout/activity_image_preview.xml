@@ -18,7 +18,7 @@
         android:layout_margin="16dp"
         android:background="@android:color/transparent"
         android:src="@android:drawable/ic_menu_close_clear_cancel"
-        android:tint="#FFFFFF"
+        app:tint="#FFFFFF"
         android:contentDescription="@string/close"
         app:layout_anchorGravity="top|end" />
 
