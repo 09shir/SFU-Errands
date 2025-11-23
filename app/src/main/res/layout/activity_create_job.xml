@@ -142,6 +142,32 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Photos (max 3) -->
+            <TextView
+                android:id="@+id/photosLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="Photos (optional, max 3)"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/addPhotosButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="Add photos" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/photosRecycler"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:layout_marginBottom="24dp"
+                android:clipToPadding="false"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp" />
+
             <!-- Submit Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/submitButton"

@@ -2,20 +2,24 @@ package com.example.sfuerrands.ui.myjobs
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.example.sfuerrands.R
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.sfuerrands.data.models.Errand
 import com.example.sfuerrands.data.repository.ErrandRepository
+import com.example.sfuerrands.data.repository.StorageRepository
 import com.example.sfuerrands.databinding.ActivityCreateJobBinding
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -24,28 +28,59 @@ class CreateJobActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityCreateJobBinding
     private val errandRepository = ErrandRepository()
+    private val storageRepository = StorageRepository()
     private val auth = FirebaseAuth.getInstance()
 
     private var selectedExpectedCompletionDate: Date? = null
     private val dateFormatter = SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.getDefault())
+
+    // images
+    private val selectedPhotoUris = mutableListOf<Uri>()
+    private val maxPhotos: Int = 3
+    private lateinit var photosAdapter: SelectedPhotoAdapter
+
+    // Activity Result for picking multiple images
+    private val pickImages =
+        registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+            if (uris == null || uris.isEmpty()) return@registerForActivityResult
+
+            // How many more can we still add
+            val remainingSlots = maxPhotos - selectedPhotoUris.size
+            if (remainingSlots <= 0) {
+                Toast.makeText(this, "You can only add up to $maxPhotos photos.", Toast.LENGTH_SHORT).show()
+                return@registerForActivityResult
+            }
+
+            // Take only as many as we have room for
+            val toAdd = uris.take(remainingSlots)
+
+            selectedPhotoUris.addAll(toAdd)
+
+            if (uris.size > remainingSlots) {
+                Toast.makeText(
+                    this,
+                    "Only $maxPhotos photos allowed. Added ${toAdd.size} more.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+
+            photosAdapter.submit(selectedPhotoUris)
+        }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityCreateJobBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Set up the toolbar with back button
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Create New Job"
 
-        // Set up campus dropdown
         setupCampusDropdown()
-
-        // Set up date picker for expected completion
         setupDatePicker()
+        setupPhotoPicker()
 
-        // Handle the submit button click
         binding.submitButton.setOnClickListener {
             submitJob()
         }
@@ -99,6 +134,29 @@ class CreateJobActivity : AppCompatActivity() {
             // Don't allow dates in the past
             datePicker.minDate = System.currentTimeMillis()
         }.show()
+    }
+
+    private fun setupPhotoPicker() {
+        photosAdapter = SelectedPhotoAdapter(emptyList()) { indexToRemove ->
+            // Remove from list
+            if (indexToRemove in selectedPhotoUris.indices) {
+                selectedPhotoUris.removeAt(indexToRemove)
+                photosAdapter.submit(selectedPhotoUris)
+                binding.addPhotosButton.isEnabled = selectedPhotoUris.size < maxPhotos
+            }
+        }
+        binding.photosRecycler.apply {
+            layoutManager =
+                LinearLayoutManager(this@CreateJobActivity, LinearLayoutManager.HORIZONTAL, false)
+            adapter = photosAdapter
+        }
+
+        binding.addPhotosButton.setOnClickListener {
+            // Launch system picker for images
+            pickImages.launch("image/*")
+        }
+
+//        binding.addPhotosButton.isEnabled = selectedPhotoUris.size < maxPhotos
     }
 
     private fun submitJob() {
@@ -185,7 +243,7 @@ class CreateJobActivity : AppCompatActivity() {
             title = title,
             description = description,
             campus = campus.lowercase(), // Store as lowercase in DB
-            location = if (location.isNotEmpty()) location else null,
+            location = location.ifEmpty { null },
             priceOffered = price,
             status = "open",
             runnerId = null,
@@ -201,6 +259,19 @@ class CreateJobActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val errandId = errandRepository.createErrand(errand)
+
+                // upload photos if any
+                if (selectedPhotoUris.isNotEmpty()) {
+                    val urls = selectedPhotoUris.map { uri ->
+                        async { storageRepository.uploadErrandMedia(errandId, uri) }
+                    }.awaitAll()
+
+                    // update errand with photoUrls
+                    errandRepository.updateErrand(
+                        errandId,
+                        mapOf("photoUrls" to urls)
+                    )
+                }
 
                 Log.d("CreateJobActivity", "=== Errand Created Successfully ===")
                 Log.d("CreateJobActivity", "Errand ID: $errandId")

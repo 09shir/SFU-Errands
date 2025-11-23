@@ -68,7 +68,7 @@ class HomeFragment : Fragment() {
                         description = e.description,
                         location = e.campus,
                         payment = e.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "$0.00",
-                        mediaPaths = e.medias
+                        mediaPaths = e.photoUrls
                     )
                 }
                 jobAdapter.submitList(jobs)

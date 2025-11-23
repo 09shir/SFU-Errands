@@ -118,4 +118,14 @@ class StorageRepository {
             else -> downloadUrlForPath(path) // e.g. "errand_medias/.."
         }
     }.getOrNull()
+
+    suspend fun uploadErrandMedia(errandId: String, uri: Uri): String {
+        // e.g. "errand_medias/{errandId}/{timestamp}.jpg"
+        val path = "errand_medias/$errandId/${System.currentTimeMillis()}.jpg"
+        val ref = root.child(path)
+
+        ref.putFile(uri).await()
+        // store as gs path in Firestore (consistent with what you’ve been doing)
+        return "gs://${storage.app.options.storageBucket}/$path"
+    }
 }
