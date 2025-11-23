@@ -5,6 +5,7 @@ import android.app.TimePickerDialog
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -65,6 +66,7 @@ class CreateJobActivity : AppCompatActivity() {
             }
 
             photosAdapter.submit(selectedPhotoUris)
+            updatePhotosUi()
         }
 
 
@@ -142,7 +144,7 @@ class CreateJobActivity : AppCompatActivity() {
             if (indexToRemove in selectedPhotoUris.indices) {
                 selectedPhotoUris.removeAt(indexToRemove)
                 photosAdapter.submit(selectedPhotoUris)
-                binding.addPhotosButton.isEnabled = selectedPhotoUris.size < maxPhotos
+                updatePhotosUi()
             }
         }
         binding.photosRecycler.apply {
@@ -155,8 +157,8 @@ class CreateJobActivity : AppCompatActivity() {
             // Launch system picker for images
             pickImages.launch("image/*")
         }
+        binding.photosRecycler.visibility = View.GONE
 
-//        binding.addPhotosButton.isEnabled = selectedPhotoUris.size < maxPhotos
     }
 
     private fun submitJob() {
@@ -301,5 +303,13 @@ class CreateJobActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         finish()
         return true
+    }
+
+    private fun updatePhotosUi() {
+        binding.photosRecycler.visibility =
+            if (selectedPhotoUris.isEmpty()) View.GONE else View.VISIBLE
+
+        // (optional) also update Add Photos button state
+        binding.addPhotosButton.isEnabled = selectedPhotoUris.size < maxPhotos
     }
 }
