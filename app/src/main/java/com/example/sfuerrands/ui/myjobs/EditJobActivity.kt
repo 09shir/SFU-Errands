@@ -23,6 +23,7 @@ class EditJobActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityEditJobBinding
     private val errandRepository = ErrandRepository()
+    private val storageRepository = StorageRepository()
 
     // Store the errand ID so we can update/delete it
     private var errandId: String = ""
@@ -31,13 +32,48 @@ class EditJobActivity : AppCompatActivity() {
     private var isClaimed: Boolean = false
 
     // Store existing photo URLs (gs:// format from Firebase)
-    private var photoUrls: List<String> = emptyList()
+    private var originalPhotoUrls: List<String> = emptyList()
     
-    // Store converted download URLs (https:// format for Glide)
-    private var downloadUrls: List<String> = emptyList()
+    // Store all current photos (existing + new)
+    private val currentPhotos = mutableListOf<PhotoItem>()
     
-    // Adapter for displaying existing photos
-    private lateinit var mediaAdapter: MediaAdapter
+    // Adapter for displaying editable photos
+    private lateinit var photoAdapter: EditablePhotoAdapter
+    
+    // Maximum number of photos allowed
+    private val maxPhotos = 3
+    
+    // Activity Result for picking multiple images
+    private val pickImages =
+        registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+            if (uris == null || uris.isEmpty()) return@registerForActivityResult
+            
+            // Calculate how many more photos we can add
+            val remainingSlots = maxPhotos - currentPhotos.size
+            if (remainingSlots <= 0) {
+                Toast.makeText(this, "You can only have up to $maxPhotos photos.", Toast.LENGTH_SHORT).show()
+                return@registerForActivityResult
+            }
+            
+            // Take only as many as we have room for
+            val toAdd = uris.take(remainingSlots)
+            
+            // Add new photos to the list
+            toAdd.forEach { uri ->
+                currentPhotos.add(PhotoItem.NewPhoto(uri))
+            }
+            
+            if (uris.size > remainingSlots) {
+                Toast.makeText(
+                    this,
+                    "Only $maxPhotos photos allowed. Added ${toAdd.size} more.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            
+            // Update the display
+            updatePhotoDisplay()
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,10 +94,10 @@ class EditJobActivity : AppCompatActivity() {
         val price = intent.getDoubleExtra("ERRAND_PRICE", 0.0)
         val location = intent.getStringExtra("ERRAND_LOCATION") ?: ""
         isClaimed = intent.getBooleanExtra("ERRAND_IS_CLAIMED", false)
-        photoUrls = intent.getStringArrayListExtra("ERRAND_PHOTO_URLS") ?: emptyList()
+        originalPhotoUrls = intent.getStringArrayListExtra("ERRAND_PHOTO_URLS") ?: emptyList()
         
         // Debug: Log photo URLs
-        android.util.Log.d("EditJobActivity", "Received ${photoUrls.size} photos: $photoUrls")
+        android.util.Log.d("EditJobActivity", "Received ${originalPhotoUrls.size} photos: $originalPhotoUrls")
 
         // --- 2. SET UP CAMPUS DROPDOWN ---
         val campuses = arrayOf("burnaby", "surrey", "vancouver")
@@ -83,11 +119,11 @@ class EditJobActivity : AppCompatActivity() {
         setupUI()
     }
     
-    // Convert Firebase Storage gs:// URLs to download URLs
+    // Convert Firebase Storage gs:// URLs to download URLs and set up photo display
     private fun convertPhotoUrls() {
-        android.util.Log.d("EditJobActivity", "convertPhotoUrls called, photoUrls size: ${photoUrls.size}")
+        android.util.Log.d("EditJobActivity", "convertPhotoUrls called, originalPhotoUrls size: ${originalPhotoUrls.size}")
         
-        if (photoUrls.isEmpty()) {
+        if (originalPhotoUrls.isEmpty()) {
             // No photos to convert, set up empty display
             android.util.Log.d("EditJobActivity", "No photos to convert")
             setupPhotoDisplay()
@@ -102,9 +138,8 @@ class EditJobActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val storage = FirebaseStorage.getInstance()
-                val urls = mutableListOf<String>()
                 
-                for (gsUrl in photoUrls) {
+                for (gsUrl in originalPhotoUrls) {
                     android.util.Log.d("EditJobActivity", "Converting: $gsUrl")
                     // Extract path from gs://bucket/path format
                     val path = gsUrl.removePrefix("gs://sfu-errand-app.firebasestorage.app/")
@@ -113,11 +148,12 @@ class EditJobActivity : AppCompatActivity() {
                     // Get download URL
                     val downloadUrl = storage.reference.child(path).downloadUrl.await()
                     android.util.Log.d("EditJobActivity", "Download URL: $downloadUrl")
-                    urls.add(downloadUrl.toString())
+                    
+                    // Add to currentPhotos list
+                    currentPhotos.add(PhotoItem.ExistingPhoto(downloadUrl.toString(), gsUrl))
                 }
                 
-                downloadUrls = urls
-                android.util.Log.d("EditJobActivity", "Converted ${downloadUrls.size} URLs, calling setupPhotoDisplay")
+                android.util.Log.d("EditJobActivity", "Converted ${currentPhotos.size} URLs, calling setupPhotoDisplay")
                 setupPhotoDisplay()
                 
             } catch (e: Exception) {
@@ -132,39 +168,62 @@ class EditJobActivity : AppCompatActivity() {
         }
     }
 
-    // Set up the RecyclerView to display existing photos
+    // Set up the RecyclerView to display editable photos
     private fun setupPhotoDisplay() {
-        android.util.Log.d("EditJobActivity", "setupPhotoDisplay called, downloadUrls size: ${downloadUrls.size}")
+        android.util.Log.d("EditJobActivity", "setupPhotoDisplay called, currentPhotos size: ${currentPhotos.size}")
         
-        // Create adapter for photos with click listener to view full size
-        mediaAdapter = MediaAdapter(downloadUrls) { position, photoUrl ->
-            // TODO: Open photo in full screen when clicked
-            Toast.makeText(this, "Photo ${position + 1} clicked", Toast.LENGTH_SHORT).show()
+        // Create adapter for editable photos
+        photoAdapter = EditablePhotoAdapter(currentPhotos) { position ->
+            // Remove photo at this position
+            currentPhotos.removeAt(position)
+            updatePhotoDisplay()
         }
 
         // Set up RecyclerView
         binding.photosRecyclerView.apply {
             layoutManager = GridLayoutManager(this@EditJobActivity, 3) // 3 columns
-            adapter = mediaAdapter
+            adapter = photoAdapter
         }
         
         android.util.Log.d("EditJobActivity", "RecyclerView adapter set")
-
+        
+        // Update the display
+        updatePhotoDisplay()
+    }
+    
+    // Update photo display (label, button, visibility)
+    private fun updatePhotoDisplay() {
+        // Update adapter
+        photoAdapter.submit(currentPhotos)
+        
         // Show/hide the photos section
-        if (downloadUrls.isEmpty()) {
-            android.util.Log.d("EditJobActivity", "No photos to display, hiding views")
+        if (currentPhotos.isEmpty()) {
             binding.photosRecyclerView.visibility = View.GONE
             binding.photosLabel.visibility = View.GONE
+            binding.addPhotosButton.text = "Add Photos"
         } else {
-            android.util.Log.d("EditJobActivity", "Showing ${downloadUrls.size} photos")
             binding.photosRecyclerView.visibility = View.VISIBLE
             binding.photosLabel.visibility = View.VISIBLE
-            binding.photosLabel.text = "Attached Photos (${downloadUrls.size})"
+            binding.photosLabel.text = "Photos (${currentPhotos.size}/$maxPhotos)"
+            
+            // Update button text
+            if (currentPhotos.size >= maxPhotos) {
+                binding.addPhotosButton.text = "Maximum Photos Reached"
+                binding.addPhotosButton.isEnabled = false
+            } else {
+                binding.addPhotosButton.text = "Add Photos (${currentPhotos.size}/$maxPhotos)"
+                binding.addPhotosButton.isEnabled = !isClaimed
+            }
         }
     }
 
     private fun setupUI() {
         // --- BUTTON CLICK LISTENERS ---
+
+        // Add Photos Button - Open photo picker
+        binding.addPhotosButton.setOnClickListener {
+            pickImages.launch("image/*")
+        }
 
         // Save Button - Update the errand in Firestore
         binding.saveButton.setOnClickListener {
@@ -191,6 +250,7 @@ class EditJobActivity : AppCompatActivity() {
             binding.campusEditText.isEnabled = false
             binding.priceEditText.isEnabled = false
             binding.locationEditText.isEnabled = false
+            binding.addPhotosButton.isEnabled = false
 
             binding.warningTextView.visibility = View.VISIBLE
             binding.warningTextView.text = "This errand has been claimed and can no longer be edited."
@@ -208,6 +268,7 @@ class EditJobActivity : AppCompatActivity() {
             binding.campusEditText.isEnabled = true
             binding.priceEditText.isEnabled = true
             binding.locationEditText.isEnabled = true
+            binding.addPhotosButton.isEnabled = currentPhotos.size < maxPhotos
 
             binding.warningTextView.visibility = View.GONE
 
@@ -260,19 +321,39 @@ class EditJobActivity : AppCompatActivity() {
         binding.saveButton.isEnabled = false
         binding.saveButton.text = "Saving..."
 
-        // Create a map of fields to update
-        val updates = mutableMapOf<String, Any?>(
-            "title" to newTitle,
-            "description" to newDescription,
-            "campus" to newCampus.lowercase(),
-            "priceOffered" to newPrice,
-            "location" to if (newLocation.isNotEmpty()) newLocation else null
-        )
-
         // Update the errand in Firestore using coroutine
         lifecycleScope.launch {
             try {
-                // Call repository to update the errand
+                // Step 1: Upload any new photos to Firebase Storage
+                val finalPhotoUrls = mutableListOf<String>()
+                
+                for (photo in currentPhotos) {
+                    when (photo) {
+                        is PhotoItem.ExistingPhoto -> {
+                            // Keep existing photo (use original gs:// URL)
+                            finalPhotoUrls.add(photo.originalGsUrl)
+                        }
+                        is PhotoItem.NewPhoto -> {
+                            // Upload new photo and get gs:// URL
+                            binding.saveButton.text = "Uploading photos..."
+                            val gsUrl = storageRepository.uploadErrandMedia(errandId, photo.uri)
+                            finalPhotoUrls.add(gsUrl)
+                        }
+                    }
+                }
+                
+                // Step 2: Create a map of fields to update
+                binding.saveButton.text = "Saving..."
+                val updates = mutableMapOf<String, Any?>(
+                    "title" to newTitle,
+                    "description" to newDescription,
+                    "campus" to newCampus.lowercase(),
+                    "priceOffered" to newPrice,
+                    "location" to if (newLocation.isNotEmpty()) newLocation else null,
+                    "photoUrls" to finalPhotoUrls
+                )
+
+                // Step 3: Update the errand in Firestore
                 errandRepository.updateErrand(errandId, updates)
 
                 // Show success message
