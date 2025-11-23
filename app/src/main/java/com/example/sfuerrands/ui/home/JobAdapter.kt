@@ -50,6 +50,7 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
                 intent.putExtra("JOB_DESCRIPTION", job.description)
                 intent.putExtra("JOB_LOCATION", job.location)
                 intent.putExtra("JOB_PAYMENT", job.payment)
+                intent.putStringArrayListExtra("JOB_MEDIA_PATHS", ArrayList(job.mediaPaths))
                 holder.itemView.context.startActivity(intent)
             }
         }
