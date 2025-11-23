@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.sfuerrands.data.models.Errand
 import com.example.sfuerrands.data.models.ErrandQuery
 import com.example.sfuerrands.data.repository.ErrandRepository
 import com.example.sfuerrands.databinding.FragmentRequestsBinding
@@ -29,6 +30,9 @@ class RequestsFragment : Fragment() {
 
     private lateinit var jobAdapter: JobAdapter
     private var errandsListener: ListenerRegistration? = null
+
+    // Store the full Errand objects so we can pass them to EditJobActivity
+    private var currentErrands: List<Errand> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -60,15 +64,33 @@ class RequestsFragment : Fragment() {
 
         // Override the click to open "Edit Job" instead of "View Job"
         jobAdapter.onJobClickListener = { job ->
-            val intent = Intent(requireContext(), EditJobActivity::class.java)
+            // Find the full Errand object by matching the ID
+            val errand = currentErrands.find { it.id == job.id }
 
-            // Pass the existing data to the edit screen
-            intent.putExtra("JOB_TITLE", job.title)
-            intent.putExtra("JOB_DESCRIPTION", job.description)
-            intent.putExtra("JOB_LOCATION", job.location)
-            intent.putExtra("JOB_PAYMENT", job.payment)
+            if (errand != null) {
+                // Open EditJobActivity and pass the full Errand data
+                val intent = Intent(requireContext(), EditJobActivity::class.java)
 
-            startActivity(intent)
+                // Pass all the errand fields as extras
+                intent.putExtra("ERRAND_ID", errand.id)
+                intent.putExtra("ERRAND_TITLE", errand.title)
+                intent.putExtra("ERRAND_DESCRIPTION", errand.description)
+                intent.putExtra("ERRAND_CAMPUS", errand.campus)
+                intent.putExtra("ERRAND_PRICE", errand.priceOffered)
+                intent.putExtra("ERRAND_LOCATION", errand.location)
+                intent.putExtra("ERRAND_STATUS", errand.status)
+                intent.putExtra("ERRAND_RUNNER_COMPLETION", errand.runnerCompletion)
+                intent.putExtra("ERRAND_CLIENT_COMPLETION", errand.clientCompletion)
+
+                // Pass photo URLs as ArrayList (Parcelable)
+                intent.putStringArrayListExtra("ERRAND_PHOTO_URLS", ArrayList(errand.photoUrls))
+
+                // Check if errand is claimed (runnerId is not null)
+                val isClaimed = errand.runnerId != null
+                intent.putExtra("ERRAND_IS_CLAIMED", isClaimed)
+
+                startActivity(intent)
+            }
         }
 
         binding.requestsRecyclerView.apply {
@@ -101,7 +123,10 @@ class RequestsFragment : Fragment() {
             onSuccess = { errands ->
                 Log.d("RequestsFragment", "Got ${errands.size} errands")
 
-                // Map Errand → Job
+                // Store the full Errand objects
+                currentErrands = errands
+
+                // Map Errand → Job for display
                 val jobs = errands.map { errand ->
                     Job(
                         id = errand.id,
