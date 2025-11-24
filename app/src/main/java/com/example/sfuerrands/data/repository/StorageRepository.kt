@@ -128,4 +128,17 @@ class StorageRepository {
         // store as gs path in Firestore (consistent with what you’ve been doing)
         return "gs://${storage.app.options.storageBucket}/$path"
     }
+
+    suspend fun uploadChatMedia(errandId: String, uri: Uri): String {
+        // path: chat_medias/{errandId}/{random}.jpg
+        val fileName = "${System.currentTimeMillis()}_${UUID.randomUUID()}.jpg"
+        val ref = storage.reference
+            .child("chat_medias")
+            .child(errandId)
+            .child(fileName)
+
+        ref.putFile(uri).await()
+        return ref.downloadUrl.await().toString()
+    }
+
 }

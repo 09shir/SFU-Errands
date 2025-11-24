@@ -12,6 +12,7 @@ import com.example.sfuerrands.data.models.Errand
 import com.example.sfuerrands.data.models.ErrandQuery
 import com.example.sfuerrands.data.repository.ErrandRepository
 import com.example.sfuerrands.databinding.FragmentRequestsBinding
+import com.example.sfuerrands.ui.chat.ChatActivity
 import com.example.sfuerrands.ui.home.Job
 import com.example.sfuerrands.ui.home.JobAdapter
 import com.google.firebase.auth.FirebaseAuth
@@ -91,6 +92,14 @@ class RequestsFragment : Fragment() {
 
                 startActivity(intent)
             }
+        }
+
+        jobAdapter.onChatClickListener = { job ->
+            val intent = Intent(requireContext(), ChatActivity::class.java).apply {
+                putExtra(ChatActivity.EXTRA_ERRAND_ID, job.id)
+                putExtra(ChatActivity.EXTRA_ERRAND_TITLE, job.title)
+            }
+            startActivity(intent)
         }
 
         binding.requestsRecyclerView.apply {

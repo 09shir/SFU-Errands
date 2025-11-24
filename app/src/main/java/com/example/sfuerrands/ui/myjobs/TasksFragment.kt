@@ -12,6 +12,7 @@ import com.example.sfuerrands.data.models.Errand
 import com.example.sfuerrands.data.models.ErrandQuery
 import com.example.sfuerrands.data.repository.ErrandRepository
 import com.example.sfuerrands.databinding.FragmentTasksBinding
+import com.example.sfuerrands.ui.chat.ChatActivity
 import com.example.sfuerrands.ui.home.Job
 import com.example.sfuerrands.ui.home.JobAdapter
 import com.google.firebase.auth.FirebaseAuth
@@ -68,6 +69,14 @@ class TasksFragment : Fragment() {
             }
         }
 
+        jobAdapter.onChatClickListener = { job ->
+            val intent = Intent(requireContext(), ChatActivity::class.java).apply {
+                putExtra(ChatActivity.EXTRA_ERRAND_ID, job.id)
+                putExtra(ChatActivity.EXTRA_ERRAND_TITLE, job.title)
+            }
+            startActivity(intent)
+        }
+
         binding.tasksRecyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = jobAdapter
@@ -105,7 +114,9 @@ class TasksFragment : Fragment() {
                         title = errand.title,
                         description = errand.description,
                         location = errand.campus.replaceFirstChar { it.uppercase() },
-                        payment = errand.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "$0.00"
+                        payment = errand.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "$0.00",
+                        mediaPaths = errand.photoUrls,
+                        isClaimed = true
                     )
                 }
 
