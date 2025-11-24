@@ -132,10 +132,14 @@ class RequestsFragment : Fragment() {
                         id = errand.id,
                         title = errand.title,
                         description = errand.description,
-                        location = errand.campus.replaceFirstChar { it.uppercase() }, // "burnaby" → "Burnaby"
-                        payment = errand.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "$0.00"
+                        location = errand.campus.replaceFirstChar { it.uppercase() },
+                        payment = errand.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "$0.00",
+                        isClaimed = errand.runnerId != null  // NEW: Check if claimed
                     )
                 }
+
+                // Enable claimed badge display in Requests tab
+                jobAdapter.showClaimedBadge = true
 
                 jobAdapter.submitList(jobs)
             },
