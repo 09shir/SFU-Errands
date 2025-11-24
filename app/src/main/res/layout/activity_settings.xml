@@ -50,12 +50,16 @@
                 android:layout_marginBottom="16dp">
 
                 <TextView
+                    android:id="@+id/buttonEditProfile"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Edit Profile"
                     android:textSize="16sp"
                     android:textColor="@android:color/black"
-                    android:paddingVertical="12dp" />
+                    android:paddingVertical="12dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground" />
 
                 <View
                     android:layout_width="match_parent"
