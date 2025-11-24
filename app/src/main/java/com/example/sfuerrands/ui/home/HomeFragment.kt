@@ -12,7 +12,9 @@ import com.example.sfuerrands.data.repository.ErrandRepository
 import com.example.sfuerrands.databinding.FragmentHomeBinding
 import com.google.firebase.firestore.firestore
 import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import com.google.firebase.firestore.ListenerRegistration
+
 class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
@@ -52,6 +54,9 @@ class HomeFragment : Fragment() {
     }
 
     private fun listenForErrands() {
+        // 1. Get current User ID to filter out own posts
+        val currentUserId = Firebase.auth.currentUser?.uid
+
         val query = ErrandQuery(
             status = "open",
             orderByCreatedAtDesc = true,
@@ -61,7 +66,13 @@ class HomeFragment : Fragment() {
             query = query,
             onSuccess = { errands ->
                 Log.d("HomeFragment", "Got ${errands.size} errands")
-                val jobs = errands.map { e ->
+
+                // 2. Filter the list: Exclude errands where requesterId is me
+                val filteredErrands = errands.filter { errand ->
+                    errand.requesterId?.id != currentUserId
+                }
+
+                val jobs = filteredErrands.map { e ->
                     Job(
                         id = e.id,
                         title = e.title,
