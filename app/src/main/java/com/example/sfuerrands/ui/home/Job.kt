@@ -6,5 +6,6 @@ data class Job(
     val description: String,
     val location: String,
     val payment: String,
-    val mediaPaths: List<String> = emptyList()
+    val mediaPaths: List<String> = emptyList(),
+    val isClaimed: Boolean = false  // NEW: Track if job is claimed
 )

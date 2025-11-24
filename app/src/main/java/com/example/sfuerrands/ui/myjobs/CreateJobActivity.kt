@@ -143,7 +143,6 @@ class CreateJobActivity : AppCompatActivity() {
             // Remove from list
             if (indexToRemove in selectedPhotoUris.indices) {
                 selectedPhotoUris.removeAt(indexToRemove)
-                photosAdapter.submit(selectedPhotoUris)
                 updatePhotosUi()
             }
         }
@@ -157,7 +156,7 @@ class CreateJobActivity : AppCompatActivity() {
             // Launch system picker for images
             pickImages.launch("image/*")
         }
-        binding.photosRecycler.visibility = View.GONE
+        updatePhotosUi()
 
     }
 
@@ -275,12 +274,6 @@ class CreateJobActivity : AppCompatActivity() {
                     )
                 }
 
-                Log.d("CreateJobActivity", "=== Errand Created Successfully ===")
-                Log.d("CreateJobActivity", "Errand ID: $errandId")
-                Log.d("CreateJobActivity", "Title: $title")
-                Log.d("CreateJobActivity", "Requester ID: $currentUserId")
-                Log.d("CreateJobActivity", "====================================")
-
                 Toast.makeText(this@CreateJobActivity, "Job created successfully!", Toast.LENGTH_LONG).show()
                 finish() // Go back to previous screen
 
@@ -306,10 +299,36 @@ class CreateJobActivity : AppCompatActivity() {
     }
 
     private fun updatePhotosUi() {
-        binding.photosRecycler.visibility =
-            if (selectedPhotoUris.isEmpty()) View.GONE else View.VISIBLE
+        // Update adapter data
+        photosAdapter.submit(selectedPhotoUris)
 
-        // (optional) also update Add Photos button state
-        binding.addPhotosButton.isEnabled = selectedPhotoUris.size < maxPhotos
+        val count = selectedPhotoUris.size
+
+        if (count == 0) {
+            // Hide section when empty
+            binding.photosRecycler.visibility = View.GONE
+            binding.photosLabel.visibility = View.GONE
+
+            binding.addPhotosButton.apply {
+                text = "Add Photos"
+                isEnabled = true
+            }
+        } else {
+            // Show section when we have at least 1
+            binding.photosRecycler.visibility = View.VISIBLE
+            binding.photosLabel.visibility = View.VISIBLE
+
+            binding.photosLabel.text = "Photos (${count}/$maxPhotos)"
+
+            // Button text + enabled state
+            if (count >= maxPhotos) {
+                binding.addPhotosButton.text = "Maximum Photos Reached"
+                binding.addPhotosButton.isEnabled = false
+            } else {
+                binding.addPhotosButton.text = "Add Photos (${count}/$maxPhotos)"
+                binding.addPhotosButton.isEnabled = true   // no isClaimed on create screen
+            }
+        }
     }
+
 }

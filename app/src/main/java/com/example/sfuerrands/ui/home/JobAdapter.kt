@@ -7,18 +7,18 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import android.content.Intent
 import com.example.sfuerrands.R
-import com.example.sfuerrands.ui.myjobs.EditJobActivity // Make sure this import is here
 
 class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.JobViewHolder>() {
 
-    // 1. ADD THIS VARIABLE: A custom click listener (nullable)
     var onJobClickListener: ((Job) -> Unit)? = null
+    var showClaimedBadge: Boolean = false  // NEW: Control whether to show claimed badge
 
     class JobViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val titleTextView: TextView = itemView.findViewById(R.id.jobTitle)
         val descriptionTextView: TextView = itemView.findViewById(R.id.jobDescription)
         val locationTextView: TextView = itemView.findViewById(R.id.jobLocation)
         val paymentTextView: TextView = itemView.findViewById(R.id.jobPayment)
+        val claimedBadge: TextView = itemView.findViewById(R.id.claimedBadge)  // NEW
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): JobViewHolder {
@@ -35,15 +35,17 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
         holder.locationTextView.text = job.location
         holder.paymentTextView.text = job.payment
 
-        // 2. UPDATE THE CLICK LISTENER
-        holder.itemView.setOnClickListener {
+        // NEW: Show/hide claimed badge based on isClaimed property
+        if (showClaimedBadge && job.isClaimed) {
+            holder.claimedBadge.visibility = View.VISIBLE
+        } else {
+            holder.claimedBadge.visibility = View.GONE
+        }
 
-            // Check if a custom listener exists (e.g., for "Requests" tab)
+        holder.itemView.setOnClickListener {
             if (onJobClickListener != null) {
-                // Execute the custom action
                 onJobClickListener?.invoke(job)
             } else {
-                // DEFAULT BEHAVIOR (for "Home" tab): Open View Details
                 val intent = Intent(holder.itemView.context, JobDetailActivity::class.java)
                 intent.putExtra("JOB_ID", job.id)
                 intent.putExtra("JOB_TITLE", job.title)

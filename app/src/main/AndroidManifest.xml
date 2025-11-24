@@ -67,6 +67,12 @@
         <activity android:name=".ui.settings.EditProfileActivity"
             android:parentActivityName=".ui.settings.SettingsActivity"
             android:theme="@style/Theme.SFUerrands.NoActionBar"/>
+        <activity
+            android:name=".ui.myjobs.TaskDetailActivity"
+            android:exported="false"
+            android:label="Task Details"
+            android:parentActivityName=".ui.myjobs.MyJobsActivity"
+            android:theme="@style/Theme.SFUerrands.NoActionBar" />
     </application>
 
 </manifest>

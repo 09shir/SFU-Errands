@@ -33,7 +33,7 @@ class MyJobsActivity : AppCompatActivity() {
         TabLayoutMediator(binding.tabLayout, binding.viewPager) {
             tab, position ->
             tab.text = when(position) {
-                0 -> "Requets"
+                0 -> "Requests"
                 1 -> "Tasks"
                 else -> ""
             }
