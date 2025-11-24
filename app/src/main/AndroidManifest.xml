@@ -62,6 +62,12 @@
             android:label="Task Details"
             android:parentActivityName=".ui.myjobs.MyJobsActivity"
             android:theme="@style/Theme.SFUerrands.NoActionBar" />
+        <activity
+            android:name=".ui.chat.ChatActivity"
+            android:exported="false"
+            android:label="Chat"
+            android:parentActivityName=".ui.myjobs.MyJobsActivity"
+            android:theme="@style/Theme.SFUerrands.NoActionBar" />
     </application>
 
 </manifest>

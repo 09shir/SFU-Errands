@@ -6,11 +6,13 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import android.content.Intent
+import android.widget.ImageButton
 import com.example.sfuerrands.R
 
 class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.JobViewHolder>() {
 
     var onJobClickListener: ((Job) -> Unit)? = null
+    var onChatClickListener: ((Job) -> Unit)? = null
     var showClaimedBadge: Boolean = false  // NEW: Control whether to show claimed badge
 
     class JobViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -18,7 +20,8 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
         val descriptionTextView: TextView = itemView.findViewById(R.id.jobDescription)
         val locationTextView: TextView = itemView.findViewById(R.id.jobLocation)
         val paymentTextView: TextView = itemView.findViewById(R.id.jobPayment)
-        val claimedBadge: TextView = itemView.findViewById(R.id.claimedBadge)  // NEW
+        val claimedBadge: TextView = itemView.findViewById(R.id.claimedBadge)
+        val chatButton: ImageButton = itemView.findViewById(R.id.jobChatButton)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): JobViewHolder {
@@ -40,6 +43,16 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
             holder.claimedBadge.visibility = View.VISIBLE
         } else {
             holder.claimedBadge.visibility = View.GONE
+        }
+
+        if (job.isClaimed) {
+            holder.chatButton.visibility = View.VISIBLE
+            holder.chatButton.setOnClickListener {
+                onChatClickListener?.invoke(job)
+            }
+        } else {
+            holder.chatButton.visibility = View.GONE
+            holder.chatButton.setOnClickListener(null)
         }
 
         holder.itemView.setOnClickListener {
