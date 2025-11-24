@@ -129,7 +129,12 @@ class EditProfileActivity : AppCompatActivity() {
     }
 
     private fun checkGalleryPermission() {
-        val permission = Manifest.permission.READ_EXTERNAL_STORAGE
+
+        val permission = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
 
         when {
             ContextCompat.checkSelfPermission(this, permission) ==
@@ -144,6 +149,7 @@ class EditProfileActivity : AppCompatActivity() {
             else -> requestPermissions(arrayOf(permission), 1001)
         }
     }
+
 
     private fun checkCameraPermission() {
         val permission = Manifest.permission.CAMERA
