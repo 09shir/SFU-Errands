@@ -1,5 +1,6 @@
 package com.example.sfuerrands.ui.settings
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.sfuerrands.databinding.ActivitySettingsBinding
@@ -19,6 +20,14 @@ class SettingsActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Settings"
+
+        // Inside SettingsActivity.onCreate after binding is inflated:
+
+        binding.buttonEditProfile.setOnClickListener {
+            val intent = Intent(this@SettingsActivity, EditProfileActivity::class.java)
+            startActivity(intent)
+        }
+
     }
 
     // back button in the toolbar
