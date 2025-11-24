@@ -116,6 +116,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Clear navigation drawer selection when returning to MainActivity
+        // This prevents the drawer from showing Jobs/Settings as selected when we're back on Home
+        if (::binding.isInitialized) {
+            binding.navView.setCheckedItem(R.id.nav_home)
+        }
+    }
+
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()

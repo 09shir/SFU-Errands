@@ -1,20 +1,36 @@
 package com.example.sfuerrands.ui.myjobs
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.sfuerrands.data.models.Errand
+import com.example.sfuerrands.data.models.ErrandQuery
+import com.example.sfuerrands.data.repository.ErrandRepository
 import com.example.sfuerrands.databinding.FragmentTasksBinding
 import com.example.sfuerrands.ui.home.Job
 import com.example.sfuerrands.ui.home.JobAdapter
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 
-// fragment that you're RUNNING for other people
+// Fragment for tasks you're RUNNING for other people
 class TasksFragment : Fragment() {
 
     private var _binding: FragmentTasksBinding? = null
     private val binding get() = _binding!!
+
+    private val errandRepository = ErrandRepository()
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseFirestore.getInstance()
+
+    private lateinit var jobAdapter: JobAdapter
+    private var errandsListener: ListenerRegistration? = null
+    private var currentErrands: List<Errand> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -27,47 +43,84 @@ class TasksFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         setupRecyclerView()
+        listenForMyTasks()
     }
 
     private fun setupRecyclerView() {
-        // hardcoded sample jobs that YOU are running
-        // TODO: these will come from a database later
-        val myActiveTasks = listOf(
-            Job(
-                id = "1",
-                title = "Return library books",
-                description = "I have 3 books that need to be returned to Bennett Library by 5pm today.",
-                location = "Bennett Library",
-                payment = "$8.00"
-            ),
-            Job(
-                id = "2",
-                title = "Buy lunch from dining hall",
-                description = "Can someone grab me a sandwich and bring it to the study room?",
-                location = "Maggie Benston Centre",
-                payment = "$7.00"
-            ),
-            Job(
-                id = "3",
-                title = "Deliver notes from CMPT class",
-                description = "Missed today's lecture. Need notes delivered to my dorm.",
-                location = "TASC Building",
-                payment = "$10.00"
-            )
-        )
+        jobAdapter = JobAdapter(emptyList())
 
-        val adapter = JobAdapter(myActiveTasks)
+        // Custom click listener to open TaskDetailActivity
+        jobAdapter.onJobClickListener = { job ->
+            val errand = currentErrands.find { it.id == job.id }
+
+            if (errand != null) {
+                val intent = Intent(requireContext(), TaskDetailActivity::class.java)
+                intent.putExtra("ERRAND_ID", errand.id)
+                intent.putExtra("ERRAND_TITLE", errand.title)
+                intent.putExtra("ERRAND_DESCRIPTION", errand.description)
+                intent.putExtra("ERRAND_CAMPUS", errand.campus)
+                intent.putExtra("ERRAND_PRICE", errand.priceOffered)
+                intent.putExtra("ERRAND_LOCATION", errand.location)
+                intent.putExtra("ERRAND_RUNNER_COMPLETION", errand.runnerCompletion)
+                intent.putStringArrayListExtra("ERRAND_PHOTO_URLS", ArrayList(errand.photoUrls))
+                startActivity(intent)
+            }
+        }
 
         binding.tasksRecyclerView.apply {
             layoutManager = LinearLayoutManager(context)
-            this.adapter = adapter
+            this.adapter = jobAdapter
         }
+    }
+
+    private fun listenForMyTasks() {
+        val currentUserId = auth.currentUser?.uid
+        if (currentUserId == null) {
+            Log.w("TasksFragment", "User not signed in")
+            jobAdapter.submitList(emptyList())
+            return
+        }
+
+        // Create DocumentReference for current user
+        val userRef = db.collection("users").document(currentUserId)
+
+        // Query errands where runnerId == current user
+        val query = ErrandQuery(
+            runnerId = userRef,
+            orderByCreatedAtDesc = true
+        )
+
+        errandsListener?.remove()
+        errandsListener = errandRepository.listenErrands(
+            query = query,
+            onSuccess = { errands ->
+                Log.d("TasksFragment", "Got ${errands.size} tasks")
+                currentErrands = errands
+
+                // Map Errand → Job for display
+                val jobs = errands.map { errand ->
+                    Job(
+                        id = errand.id,
+                        title = errand.title,
+                        description = errand.description,
+                        location = errand.campus.replaceFirstChar { it.uppercase() },
+                        payment = errand.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "$0.00"
+                    )
+                }
+
+                jobAdapter.submitList(jobs)
+            },
+            onError = { e ->
+                Log.e("TasksFragment", "Tasks listen error", e)
+                jobAdapter.submitList(emptyList())
+            }
+        )
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        errandsListener?.remove()
         _binding = null
     }
 }
