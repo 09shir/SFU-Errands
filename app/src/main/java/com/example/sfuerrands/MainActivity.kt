@@ -42,11 +42,9 @@ class MainActivity : AppCompatActivity() {
                 finish(); return@launch
             }
 
-            // Refresh profile & token; check verification
             val verified = try { authRepo.isEmailVerifiedFresh() } catch (e: Exception) { false }
 
             if (!verified) {
-                // Don’t inflate main UI; go to verify screen instead
                 startActivity(
                     Intent(this@MainActivity, VerifyEmailActivity::class.java)
                         .putExtra("displayName", u.displayName ?: "")
@@ -54,7 +52,6 @@ class MainActivity : AppCompatActivity() {
                 finish(); return@launch
             }
 
-            // Verified: ensure /users/{uid} exists, then show main UI
             try {
                 authRepo.createUserDocIfMissing(displayName = u.displayName ?: "")
             } catch (_: Exception) { /* optional: toast/log */ }
@@ -64,20 +61,19 @@ class MainActivity : AppCompatActivity() {
 
             setSupportActionBar(binding.appBarMain.toolbar)
 
-        val drawerLayout: DrawerLayout = binding.drawerLayout
-        val navView: NavigationView = binding.navView
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-        appBarConfiguration = AppBarConfiguration(
-            setOf(
-                R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow
-            ), drawerLayout
-        )
-        setupActionBarWithNavController(navController, appBarConfiguration)
-        navView.setupWithNavController(navController)
+            val drawerLayout: DrawerLayout = binding.drawerLayout
+            val navView: NavigationView = binding.navView
+            val navController = findNavController(R.id.nav_host_fragment_content_main)
+            // Passing each menu ID as a set of Ids because each
+            // menu should be considered as top level destinations.
+            appBarConfiguration = AppBarConfiguration(
+                setOf(
+                    R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow
+                ), drawerLayout
+            )
+            setupActionBarWithNavController(navController, appBarConfiguration)
+            navView.setupWithNavController(navController)
 
-            // Handle nav drawer hamburger clicks
             navView.setNavigationItemSelectedListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.nav_jobs -> {

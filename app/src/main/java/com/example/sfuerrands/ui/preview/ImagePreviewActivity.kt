@@ -14,18 +14,18 @@ class ImagePreviewActivity : AppCompatActivity() {
         binding = ActivityImagePreviewBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Get data from intent
+        // get image url and start index
         val urls = intent.getStringArrayListExtra(EXTRA_URLS) ?: arrayListOf()
         val startIndex = intent.getIntExtra(EXTRA_START_INDEX, 0)
             .coerceIn(0, (urls.size - 1).coerceAtLeast(0))
 
-        // Set up ViewPager2
+        // ViewPager2
         val adapter = ImagePreviewAdapter(urls)
         binding.pager.adapter = adapter
         binding.pager.orientation = ViewPager2.ORIENTATION_HORIZONTAL
         binding.pager.setCurrentItem(startIndex, false)
 
-        // Close button
+        // close button
         binding.btnClose.setOnClickListener {
             finish()
         }
