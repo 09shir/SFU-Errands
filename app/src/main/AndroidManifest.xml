@@ -79,6 +79,10 @@
             android:label="Chat"
             android:parentActivityName=".ui.myjobs.MyJobsActivity"
             android:theme="@style/Theme.SFUerrands.NoActionBar" />
+        <activity
+            android:name=".ui.auth.SignUpActivity"
+            android:exported="false"
+            android:label="Sign Up" />
     </application>
 
 </manifest>
