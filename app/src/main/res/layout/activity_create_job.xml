@@ -49,11 +49,10 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Description Input (multiline) -->
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/descriptionInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
                 android:hint="Description"
                 app:boxBackgroundMode="outline">
 
@@ -64,10 +63,22 @@
                     android:gravity="top|start"
                     android:inputType="textMultiLine"
                     android:lines="4"
-                    android:maxLines="6"
+                    android:maxLines="10"
                     android:minLines="4" />
 
             </com.google.android.material.textfield.TextInputLayout>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRefineDescription"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginTop="-8dp"
+                android:text="Auto-Refine with AI"
+                android:textColor="@color/purple_500"
+                app:icon="@drawable/baseline_auto_awesome_24"
+                app:iconTint="@color/purple_500"
+                app:iconGravity="textStart" />
 
             <!-- Campus Dropdown -->
             <com.google.android.material.textfield.TextInputLayout
