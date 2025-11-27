@@ -1,41 +1,77 @@
-<!-- res/layout/activity_verify_email.xml -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:padding="24dp" android:orientation="vertical"
-    android:layout_width="match_parent" android:layout_height="match_parent">
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@android:color/white">
 
-    <TextView
-        android:id="@+id/tvInfo"
-        android:text="We sent a verification link to your email.\nPlease tap the link, then return here."
-        android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:paddingBottom="16dp"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="32dp">
 
-    <Button
-        android:id="@+id/btnOpenEmail"
-        android:text="Open email app"
-        android:layout_width="match_parent" android:layout_height="wrap_content"/>
+        <ImageView
+            android:src="@android:drawable/ic_dialog_email"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginBottom="24dp"
+            android:contentDescription="Email Icon"
+            android:tint="@color/teal_700" />
 
-    <Button
-        android:id="@+id/btnIVerified"
-        android:text="I verified"
-        android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"/>
+        <TextView
+            android:text="Verify your email"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"/>
 
-    <Button
-        android:id="@+id/btnResend"
-        android:text="Resend verification email"
-        android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"/>
+        <TextView
+            android:id="@+id/tvDescription"
+            android:text="We sent a verification link to your email address. Please click the link in your inbox to continue."
+            android:gravity="center"
+            android:textSize="16sp"
+            android:lineSpacingExtra="4dp"
+            android:textColor="#666666"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"/>
 
-    <Button
-        android:id="@+id/btnSignOut"
-        android:text="Sign out"
-        android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"/>
+        <Button
+            android:id="@+id/btnIVerified"
+            android:text="I have verified my email"
+            android:padding="12dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"/>
 
-    <ProgressBar
-        android:id="@+id/progress"
-        android:visibility="gone"
-        android:layout_gravity="center"
-        android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"/>
-</LinearLayout>
+        <Button
+            android:id="@+id/btnResend"
+            android:text="Resend Link"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tvSignOut"
+            android:text="Wrong email? Sign Out"
+            android:textColor="@color/purple_500"
+            android:padding="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <ProgressBar
+            android:id="@+id/progress"
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"/>
+
+    </LinearLayout>
+</ScrollView>

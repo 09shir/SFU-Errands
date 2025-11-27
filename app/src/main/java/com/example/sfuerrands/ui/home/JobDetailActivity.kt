@@ -115,7 +115,6 @@ class JobDetailActivity : AppCompatActivity() {
             binding.mediaRecycler.visibility = View.GONE
         } else {
             binding.mediaRecycler.visibility = View.VISIBLE
-            // Resolve to download URLs in parallel
             lifecycleScope.launch {
                 try {
                     Firebase.auth.currentUser?.getIdToken(true)?.await()
@@ -129,7 +128,6 @@ class JobDetailActivity : AppCompatActivity() {
                         mediaAdapter.submit(urls)
                     }
                 } catch (e: Exception) {
-                    // Handle potential errors fetching images (e.g. auth issues)
                     binding.mediaRecycler.visibility = View.GONE
                 }
             }

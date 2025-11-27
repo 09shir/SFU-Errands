@@ -20,7 +20,7 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // If already signed in, skip
+        // If already signed in, skip to main
         if (authRepo.isSignedIn()) {
             startActivity(Intent(this, MainActivity::class.java))
             finish()
@@ -30,6 +30,7 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // 1. Sign In Logic
         binding.btnSignIn.setOnClickListener {
             val email = binding.etEmail.text.toString().trim()
             val pass  = binding.etPassword.text.toString()
@@ -43,8 +44,8 @@ class LoginActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 try {
                     authRepo.signIn(email, pass)
-
                     val verified = authRepo.isEmailVerifiedFresh()
+
                     if (!verified) {
                         // Stay signed in so they can tap “Resend”, but don’t let them into Main
                         startActivity(Intent(this@LoginActivity, VerifyEmailActivity::class.java))
@@ -62,40 +63,19 @@ class LoginActivity : AppCompatActivity() {
             }
         }
 
-        binding.btnSignUp.setOnClickListener {
-            val name  = binding.etName.text.toString().trim()
-            val email = binding.etEmail.text.toString().trim()
-            val pass  = binding.etPassword.text.toString()
-
-            if (name.isEmpty() || email.isEmpty() || pass.isEmpty()) {
-                toast("Enter name, email, password")
-                return@setOnClickListener
-            }
-
-            if (!isSfuEmail(email)) {
-                toast("Please use a valid SFU email address.")
-                return@setOnClickListener
-            }
-
-            setLoading(true)
-            lifecycleScope.launch {
-                try {
-                    authRepo.signUpAndSendVerification(email, pass, name)
-                    // Navigate to a VerifyEmailActivity
-                    startActivity(Intent(this@LoginActivity, VerifyEmailActivity::class.java)
-                        .putExtra("displayName", name))
-                    finish()
-                } catch (e: Exception) {
-                    setLoading(false)
-                    Log.d("SignUp", "Error during sign up", e)
-                    toast(e.message ?: "Sign up failed")
-                }
-            }
+        // 2. Navigate to Sign Up Screen
+        binding.tvGoToSignUp.setOnClickListener {
+            startActivity(Intent(this, SignUpActivity::class.java))
+            // We don't finish() here so the user can press Back to return to Login
         }
 
+        // 3. Forgot Password Logic
         binding.btnForgot.setOnClickListener {
             val email = binding.etEmail.text.toString().trim()
-            if (email.isEmpty()) { toast("Enter email first"); return@setOnClickListener }
+            if (email.isEmpty()) {
+                toast("Enter email first")
+                return@setOnClickListener
+            }
             lifecycleScope.launch {
                 try {
                     authRepo.sendPasswordReset(email)
@@ -110,12 +90,9 @@ class LoginActivity : AppCompatActivity() {
     private fun setLoading(loading: Boolean) {
         binding.progress.visibility = if (loading) View.VISIBLE else View.GONE
         binding.btnSignIn.isEnabled = !loading
-        binding.btnSignUp.isEnabled = !loading
+        binding.tvGoToSignUp.isEnabled = !loading
+        binding.btnForgot.isEnabled = !loading
     }
-
-    fun isSfuEmail(email: String): Boolean =
-        email.lowercase().matches(Regex("^[A-Z0-9._%+-]+@(?:sfu\\.ca|g\\.sfu\\.ca)$", RegexOption.IGNORE_CASE))
-
 
     private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
 }

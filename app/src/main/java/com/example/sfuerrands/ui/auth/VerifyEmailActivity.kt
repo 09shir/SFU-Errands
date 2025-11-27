@@ -13,7 +13,6 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.launch
 
-// VerifyEmailActivity.kt
 class VerifyEmailActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityVerifyEmailBinding
@@ -24,23 +23,25 @@ class VerifyEmailActivity : AppCompatActivity() {
         binding = ActivityVerifyEmailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.btnOpenEmail.setOnClickListener {
-            // best-effort: open any mail app
-            val intent = Intent(Intent.ACTION_MAIN).apply {
-                addCategory(Intent.CATEGORY_APP_EMAIL)
-            }
-            startActivity(Intent.createChooser(intent, "Open email"))
+        // UX Improvement: Show the user which email we are waiting on
+        val currentUserEmail = Firebase.auth.currentUser?.email
+        if (!currentUserEmail.isNullOrEmpty()) {
+            binding.tvDescription.text = "We sent a verification link to:\n$currentUserEmail\n\nPlease click the link in your inbox, then tap the button below."
         }
 
+        // 1. "I have verified" button
         binding.btnIVerified.setOnClickListener {
             setLoading(true)
             lifecycleScope.launch {
                 try {
+                    // Check if verified
                     if (!authRepo.isEmailVerifiedFresh()) {
-                        toast("Not verified yet. Check your inbox or tap Resend.")
-                        setLoading(false); return@launch
+                        toast("Not verified yet. Please check your inbox.")
+                        setLoading(false)
+                        return@launch
                     }
-                    // Create user doc only after verified
+
+                    // Success: Create user doc and go to Main
                     val name = intent.getStringExtra("displayName") ?: ""
                     authRepo.createUserDocIfMissing(name)
                     goMain()
@@ -51,21 +52,23 @@ class VerifyEmailActivity : AppCompatActivity() {
             }
         }
 
+        // 2. Resend Link button
         binding.btnResend.setOnClickListener {
             setLoading(true)
             lifecycleScope.launch {
                 try {
                     authRepo.resendVerificationEmail()
-                    toast("Verification email sent")
+                    toast("Verification email sent!")
                 } catch (e: Exception) {
-                    toast(e.message ?: "Resend failed")
+                    toast(e.message ?: "Failed to resend email")
                 } finally {
                     setLoading(false)
                 }
             }
         }
 
-        binding.btnSignOut.setOnClickListener {
+        // 3. Sign Out text link
+        binding.tvSignOut.setOnClickListener {
             Firebase.auth.signOut()
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
@@ -73,18 +76,24 @@ class VerifyEmailActivity : AppCompatActivity() {
     }
 
     private fun goMain() {
-        startActivity(Intent(this, MainActivity::class.java))
+        // Clear back stack so they can't go back to Verify screen
+        val intent = Intent(this, MainActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
         finish()
     }
 
-    private fun setLoading(b: Boolean) {
-        binding.progress.visibility = if (b) View.VISIBLE else View.GONE
-        binding.btnIVerified.isEnabled = !b
-        binding.btnResend.isEnabled = !b
-        binding.btnSignOut.isEnabled = !b
-        binding.btnOpenEmail.isEnabled = !b
+    private fun setLoading(isLoading: Boolean) {
+        binding.progress.visibility = if (isLoading) View.VISIBLE else View.GONE
+
+        // Disable inputs while loading
+        binding.btnIVerified.isEnabled = !isLoading
+        binding.btnResend.isEnabled = !isLoading
+        binding.tvSignOut.isClickable = !isLoading
+
+        // Visual feedback on opacity
+        binding.btnIVerified.alpha = if (isLoading) 0.5f else 1.0f
     }
 
     private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
 }
-

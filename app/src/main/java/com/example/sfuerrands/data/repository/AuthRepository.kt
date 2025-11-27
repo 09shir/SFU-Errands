@@ -15,20 +15,7 @@ class AuthRepository {
 
     private val auth = Firebase.auth
     private val db = Firebase.firestore
-
-    fun currentUid(): String? = auth.currentUser?.uid
     fun isSignedIn(): Boolean = auth.currentUser != null
-    /**
-     * Get user document by UID
-     */
-    suspend fun getUserById(uid: String): User? {
-        return try {
-            val doc = db.collection("users").document(uid).get().await()
-            doc.toObject(User::class.java)
-        } catch (e: Exception) {
-            null
-        }
-    }
     suspend fun signOut() { auth.signOut() }
 
     /**
@@ -42,39 +29,12 @@ class AuthRepository {
         val cred = auth.createUserWithEmailAndPassword(email, password).await()
         val user = cred.user ?: error("No user from FirebaseAuth")
 
-        // Optional: update profile display name
         val profile = com.google.firebase.auth.userProfileChangeRequest {
             this.displayName = displayName
         }
         user.updateProfile(profile).await()
 
-        // Configure deep link back to your app (must match Firebase console settings)
-        val actionSettings = ActionCodeSettings.newBuilder()
-            .setUrl("https://yourapp.page.link/verify")      // your dynamic link / fallback URL
-            .setHandleCodeInApp(true)
-            .setAndroidPackageName(
-                "com.example.sfuerrands", /* installIfNotAvailable= */ true, /* minimumVersion= */ null
-            )
-            .build()
-
-//        // Create /users/{uid} matching your schema
-//        val uid = user.uid
-//        val doc = mapOf(
-//            "displayName" to displayName,
-//            "email" to email,
-//            "photoUrl" to null,               // storage path later
-//            "campuses" to campuses,           // e.g., listOf("burnaby")
-//            "requesterRatingCount" to 0,
-//            "requesterRatingSum" to 0.0,
-//            "runnerRatingCount" to 0,
-//            "runnerRatingSum" to 0.0,
-//            "createdAt" to FieldValue.serverTimestamp(),
-//            "lastActiveAt" to FieldValue.serverTimestamp()
-//        )
-//        db.collection("users").document(uid).set(doc).await()
-
-        // Optional: email verification
-         user.sendEmailVerification().await()
+        user.sendEmailVerification().await()
     }
 
     // Check if email is verified, after refreshing user data from server.
