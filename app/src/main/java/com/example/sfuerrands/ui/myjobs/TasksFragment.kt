@@ -75,7 +75,8 @@ class TasksFragment : Fragment() {
 
             if (requesterRef != null) {
                 val intent = Intent(requireContext(), ProfileDisplayActivity::class.java).apply {
-                    putExtra("REQUESTER_PATH", requesterRef.path)
+                    putExtra("PERSON_PATH", requesterRef.path)
+                    putExtra("ROLE", "requester")
                 }
                 startActivity(intent)
             } else {

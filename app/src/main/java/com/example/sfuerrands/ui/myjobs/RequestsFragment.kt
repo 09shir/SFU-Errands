@@ -108,7 +108,8 @@ class RequestsFragment : Fragment() {
 
             if (runnerRef != null) {
                 val intent = Intent(requireContext(), ProfileDisplayActivity::class.java).apply {
-                    putExtra("RUNNER_PATH", runnerRef.path)
+                    putExtra("PERSON_PATH", runnerRef.path)
+                    putExtra("ROLE", "runner")
                 }
                 startActivity(intent)
             } else {

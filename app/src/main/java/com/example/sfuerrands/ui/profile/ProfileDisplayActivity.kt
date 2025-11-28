@@ -28,25 +28,30 @@ class ProfileDisplayActivity : AppCompatActivity() {
 
         binding.btnClose.setOnClickListener { finish() }
 
-        val runnerPath = intent.getStringExtra("RUNNER_PATH")
-        val requesterPath = intent.getStringExtra("REQUESTER_PATH")
+        // runner or requester
+        val personPath = intent.getStringExtra("PERSON_PATH")
+        val role = intent.getStringExtra("ROLE")
 
-        val path: String?
-        if (runnerPath != null) {
-            path = runnerPath
-            isViewingRunner = true
-        } else if (requesterPath != null) {
-            path = requesterPath
-            isViewingRunner = false
-        } else {
-            path = null
+        when (role) {
+            "runner" -> {
+                isViewingRunner = true
+            }
+            "requester" -> {
+                isViewingRunner = false
+            }
+            else -> {
+                Toast.makeText(this, "Error: No role provided", Toast.LENGTH_SHORT).show()
+                finish()
+            }
         }
 
-        if (path != null) {
-            loadUserProfile(path)
-        } else {
-            Toast.makeText(this, "Error: No profile path provided", Toast.LENGTH_SHORT).show()
+        if (personPath != null) {
+            loadUserProfile(personPath)
+            return
+        } else if (role == null) {
+            Toast.makeText(this, "Error: No role provided", Toast.LENGTH_SHORT).show()
             finish()
+            return
         }
     }
 
@@ -61,7 +66,14 @@ class ProfileDisplayActivity : AppCompatActivity() {
                 if (user != null) {
                     setupUI(user)
                 } else {
-                    binding.tvDisplayName.text = "User not found"
+                    binding.tvDisplayName.text = "User was deactivated"
+                    if (isViewingRunner) {
+                        binding.tvRoleBadge.text = "RUNNER"
+                        binding.tvRoleBadge.setBackgroundColor(Color.parseColor("#4CAF50"))
+                    } else {
+                        binding.tvRoleBadge.text = "REQUESTER"
+                        binding.tvRoleBadge.setBackgroundColor(Color.parseColor("#2196F3"))
+                    }
                 }
 
             } catch (e: Exception) {

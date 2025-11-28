@@ -1,5 +1,6 @@
 package com.example.sfuerrands.ui.home
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -10,7 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.sfuerrands.data.models.ErrandQuery
 import com.example.sfuerrands.data.repository.ErrandRepository
 import com.example.sfuerrands.databinding.FragmentHomeBinding
-import com.google.firebase.firestore.firestore
+import com.example.sfuerrands.ui.profile.ProfileDisplayActivity
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.ListenerRegistration
@@ -18,8 +19,6 @@ import com.google.firebase.firestore.ListenerRegistration
 class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
-
-    private val db = Firebase.firestore
     private lateinit var jobAdapter: JobAdapter
     private var errandsListener: ListenerRegistration? = null
     private val errandRepository = ErrandRepository()
@@ -43,6 +42,20 @@ class HomeFragment : Fragment() {
 
         // Create the adapter with our sample jobs
         jobAdapter = JobAdapter(emptyList())
+
+        jobAdapter.onProfileClickListener = { job ->
+            val requesterRef = job.requester
+
+            if (requesterRef != null) {
+                val intent = Intent(requireContext(), ProfileDisplayActivity::class.java).apply {
+                    putExtra("PERSON_PATH", requesterRef.path)
+                    putExtra("ROLE", "requester")
+                }
+                startActivity(intent)
+            } else {
+                Log.e("HomeFragment", "Cannot open profile: Requester ref is null")
+            }
+        }
 
         // Set up the RecyclerView
         binding.jobsRecyclerView.apply {
@@ -79,7 +92,8 @@ class HomeFragment : Fragment() {
                         description = e.description,
                         location = e.campus,
                         payment = e.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "$0.00",
-                        mediaPaths = e.photoUrls
+                        mediaPaths = e.photoUrls,
+                        requester = e.requesterId
                     )
                 }
                 jobAdapter.submitList(jobs)

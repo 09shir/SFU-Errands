@@ -40,6 +40,11 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
         holder.locationTextView.text = job.location
         holder.paymentTextView.text = job.payment
 
+        holder.profileButton.visibility = View.VISIBLE
+        holder.profileButton.setOnClickListener {
+            onProfileClickListener?.invoke(job)
+        }
+
         // NEW: Show/hide claimed badge based on isClaimed property
         if (showClaimedBadge && job.isClaimed) {
             holder.claimedBadge.visibility = View.VISIBLE
@@ -52,16 +57,9 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
             holder.chatButton.setOnClickListener {
                 onChatClickListener?.invoke(job)
             }
-            holder.profileButton.visibility = View.VISIBLE
-            holder.profileButton.setOnClickListener {
-                onProfileClickListener?.invoke(job)
-            }
         } else {
             holder.chatButton.visibility = View.GONE
             holder.chatButton.setOnClickListener(null)
-
-            holder.profileButton.visibility = View.GONE
-            holder.profileButton.setOnClickListener(null)
         }
 
         holder.itemView.setOnClickListener {
