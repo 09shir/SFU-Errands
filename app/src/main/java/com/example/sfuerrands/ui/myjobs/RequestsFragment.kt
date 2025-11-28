@@ -15,6 +15,7 @@ import com.example.sfuerrands.databinding.FragmentRequestsBinding
 import com.example.sfuerrands.ui.chat.ChatActivity
 import com.example.sfuerrands.ui.home.Job
 import com.example.sfuerrands.ui.home.JobAdapter
+import com.example.sfuerrands.ui.profile.ProfileDisplayActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -102,6 +103,19 @@ class RequestsFragment : Fragment() {
             startActivity(intent)
         }
 
+        jobAdapter.onProfileClickListener = { job ->
+            val runnerRef = job.runner
+
+            if (runnerRef != null) {
+                val intent = Intent(requireContext(), ProfileDisplayActivity::class.java).apply {
+                    putExtra("RUNNER_PATH", runnerRef.path)
+                }
+                startActivity(intent)
+            } else {
+                Log.e("RequestsFragment", "Cannot open profile: Runner ref is null")
+            }
+        }
+
         binding.requestsRecyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             this.adapter = jobAdapter
@@ -143,7 +157,8 @@ class RequestsFragment : Fragment() {
                         description = errand.description,
                         location = errand.campus.replaceFirstChar { it.uppercase() },
                         payment = errand.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "$0.00",
-                        isClaimed = errand.runnerId != null  // NEW: Check if claimed
+                        isClaimed = errand.runnerId != null,
+                        runner = errand.runnerId
                     )
                 }
 

@@ -80,6 +80,18 @@
                 android:textColor="@android:color/darker_gray" />
 
             <ImageButton
+                android:id="@+id/runnerProfileButton"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp"
+                android:background="@android:color/transparent"
+                android:src="@drawable/baseline_person_24"
+                android:contentDescription="Runner Profile"
+                android:visibility="gone"
+                app:tint="@android:color/darker_gray" />
+
+            <ImageButton
                 android:id="@+id/jobChatButton"
                 android:layout_width="32dp"
                 android:layout_height="32dp"

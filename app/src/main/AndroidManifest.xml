@@ -83,6 +83,11 @@
             android:name=".ui.auth.SignUpActivity"
             android:exported="false"
             android:label="Sign Up" />
+        <activity
+            android:name=".ui.profile.ProfileDisplayActivity"
+            android:exported="false"
+            android:label="Runner Profile"
+            android:theme="@style/Theme.SFUerrands.NoActionBar" />
     </application>
 
 </manifest>

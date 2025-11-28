@@ -13,6 +13,7 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
 
     var onJobClickListener: ((Job) -> Unit)? = null
     var onChatClickListener: ((Job) -> Unit)? = null
+    var onProfileClickListener: ((Job) -> Unit)? = null
     var showClaimedBadge: Boolean = false  // NEW: Control whether to show claimed badge
 
     class JobViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -22,6 +23,7 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
         val paymentTextView: TextView = itemView.findViewById(R.id.jobPayment)
         val claimedBadge: TextView = itemView.findViewById(R.id.claimedBadge)
         val chatButton: ImageButton = itemView.findViewById(R.id.jobChatButton)
+        val profileButton: ImageButton = itemView.findViewById(R.id.runnerProfileButton)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): JobViewHolder {
@@ -50,9 +52,16 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
             holder.chatButton.setOnClickListener {
                 onChatClickListener?.invoke(job)
             }
+            holder.profileButton.visibility = View.VISIBLE
+            holder.profileButton.setOnClickListener {
+                onProfileClickListener?.invoke(job)
+            }
         } else {
             holder.chatButton.visibility = View.GONE
             holder.chatButton.setOnClickListener(null)
+
+            holder.profileButton.visibility = View.GONE
+            holder.profileButton.setOnClickListener(null)
         }
 
         holder.itemView.setOnClickListener {
