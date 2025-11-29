@@ -15,6 +15,7 @@ import com.example.sfuerrands.databinding.FragmentTasksBinding
 import com.example.sfuerrands.ui.chat.ChatActivity
 import com.example.sfuerrands.ui.home.Job
 import com.example.sfuerrands.ui.home.JobAdapter
+import com.example.sfuerrands.ui.profile.ProfileDisplayActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -69,6 +70,20 @@ class TasksFragment : Fragment() {
             }
         }
 
+        jobAdapter.onProfileClickListener = { job ->
+            val requesterRef = job.requester
+
+            if (requesterRef != null) {
+                val intent = Intent(requireContext(), ProfileDisplayActivity::class.java).apply {
+                    putExtra("PERSON_PATH", requesterRef.path)
+                    putExtra("ROLE", "requester")
+                }
+                startActivity(intent)
+            } else {
+                Log.e("RequestsFragment", "Cannot open profile: Requester ref is null")
+            }
+        }
+
         jobAdapter.onChatClickListener = { job ->
             val intent = Intent(requireContext(), ChatActivity::class.java).apply {
                 putExtra(ChatActivity.EXTRA_ERRAND_ID, job.id)
@@ -116,7 +131,8 @@ class TasksFragment : Fragment() {
                         location = errand.campus.replaceFirstChar { it.uppercase() },
                         payment = errand.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "$0.00",
                         mediaPaths = errand.photoUrls,
-                        isClaimed = true
+                        isClaimed = true,
+                        requester = errand.requesterId
                     )
                 }
 
