@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.sfuerrands.data.models.Errand
@@ -19,6 +20,9 @@ import com.example.sfuerrands.ui.profile.ProfileDisplayActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.example.sfuerrands.data.repository.ChatRepository
+import kotlinx.coroutines.launch
+import androidx.lifecycle.lifecycleScope
 
 // Fragment for tasks you're RUNNING for other people
 class TasksFragment : Fragment() {
@@ -33,6 +37,8 @@ class TasksFragment : Fragment() {
     private lateinit var jobAdapter: JobAdapter
     private var errandsListener: ListenerRegistration? = null
     private var currentErrands: List<Errand> = emptyList()
+    private val chatListeners = mutableMapOf<String, ListenerRegistration>()  // Track chat listeners
+    private val unreadCounts = mutableMapOf<String, Int>()  // Track unread counts by errand ID
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -46,6 +52,13 @@ class TasksFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
+        listenForMyTasks()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Refresh the listener to update unread counts
+        errandsListener?.remove()
         listenForMyTasks()
     }
 
@@ -80,7 +93,7 @@ class TasksFragment : Fragment() {
                 }
                 startActivity(intent)
             } else {
-                Log.e("RequestsFragment", "Cannot open profile: Requester ref is null")
+                Log.e("TasksFragment", "Cannot open profile: Requester ref is null")
             }
         }
 
@@ -99,55 +112,80 @@ class TasksFragment : Fragment() {
     }
 
     private fun listenForMyTasks() {
-        val currentUserId = auth.currentUser?.uid
-        if (currentUserId == null) {
-            Log.w("TasksFragment", "User not signed in")
-            jobAdapter.submitList(emptyList())
+        val currentUid = auth.currentUser?.uid
+        if (currentUid == null) {
+            Toast.makeText(requireContext(), "Not signed in", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // Create DocumentReference for current user
-        val userRef = db.collection("users").document(currentUserId)
+        val myRef = db.collection("users").document(currentUid)
+        val chatRepo = ChatRepository()
 
-        // Query errands where runnerId == current user
-        val query = ErrandQuery(
-            runnerId = userRef,
-            orderByCreatedAtDesc = true
-        )
-
-        errandsListener?.remove()
         errandsListener = errandRepository.listenErrands(
-            query = query,
+            query = ErrandQuery(
+                runnerId = myRef,
+                orderByCreatedAtDesc = true
+            ),
             onSuccess = { errands ->
-                Log.d("TasksFragment", "Got ${errands.size} tasks")
                 currentErrands = errands
-
-                // Map Errand → Job for display
-                val jobs = errands.map { errand ->
-                    Job(
-                        id = errand.id,
-                        title = errand.title,
-                        description = errand.description,
-                        location = errand.campus.replaceFirstChar { it.uppercase() },
-                        payment = errand.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "$0.00",
-                        mediaPaths = errand.photoUrls,
-                        isClaimed = true,
-                        requester = errand.requesterId
-                    )
+                
+                // Remove old chat listeners that are no longer needed
+                val currentErrandIds = errands.map { it.id }.toSet()
+                chatListeners.keys.toList().forEach { errandId ->
+                    if (errandId !in currentErrandIds) {
+                        chatListeners[errandId]?.remove()
+                        chatListeners.remove(errandId)
+                        unreadCounts.remove(errandId)
+                    }
                 }
-
-                jobAdapter.submitList(jobs)
+                
+                // Set up real-time listeners for unread counts
+                errands.forEach { errand ->
+                    if (!chatListeners.containsKey(errand.id)) {
+                        val listener = chatRepo.listenUnreadCount(errand.id, myRef) { count ->
+                            unreadCounts[errand.id] = count
+                            updateJobsList()
+                        }
+                        chatListeners[errand.id] = listener
+                    }
+                }
+                
+                // Initial update
+                updateJobsList()
             },
-            onError = { e ->
-                Log.e("TasksFragment", "Tasks listen error", e)
-                jobAdapter.submitList(emptyList())
+            onError = { exception ->
+                Toast.makeText(
+                    requireContext(),
+                    "Error: ${exception.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         )
+    }
+    
+    private fun updateJobsList() {
+        val jobs = currentErrands.map { errand ->
+            Job(
+                id = errand.id,
+                title = errand.title,
+                description = errand.description,
+                location = errand.location ?: "N/A",
+                payment = errand.priceOffered?.let { "$$it" } ?: "Free",
+                mediaPaths = errand.photoUrls,
+                isClaimed = errand.status == "claimed" || errand.runnerId != null,
+                requester = errand.requesterId,
+                runner = errand.runnerId,
+                unreadMessageCount = unreadCounts[errand.id] ?: 0
+            )
+        }
+        jobAdapter.submitList(jobs)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         errandsListener?.remove()
+        chatListeners.values.forEach { it.remove() }
+        chatListeners.clear()
         _binding = null
     }
 }

@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.example.sfuerrands.data.repository.ErrandRepository
 import com.example.sfuerrands.databinding.ActivityTaskDetailBinding
 import com.example.sfuerrands.ui.home.MediaAdapter
-import com.example.sfuerrands.ui.preview.ImagePreviewNavigator // Added import
+import com.example.sfuerrands.ui.preview.ImagePreviewNavigator
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.launch
@@ -112,7 +112,6 @@ class TaskDetailActivity : AppCompatActivity() {
     }
 
     private fun setupPhotoDisplay() {
-        // Updated to use ImagePreviewNavigator instead of Toast
         mediaAdapter = MediaAdapter(downloadUrls) { position, _ ->
             ImagePreviewNavigator.open(
                 context = this@TaskDetailActivity,

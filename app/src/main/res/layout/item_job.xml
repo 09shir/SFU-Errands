@@ -11,6 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:clipChildren="false"
         android:padding="16dp">
 
         <!-- Top Row: Title + Claimed Badge -->
@@ -59,15 +60,15 @@
             android:textSize="14sp"
             android:textColor="@android:color/darker_gray" />
 
-        <!-- Bottom row with location and payment -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
-            <!-- Location -->
             <TextView
                 android:id="@+id/jobLocation"
                 android:layout_width="0dp"
@@ -91,19 +92,41 @@
                 android:visibility="gone"
                 app:tint="@android:color/darker_gray" />
 
-            <ImageButton
-                android:id="@+id/jobChatButton"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:layout_marginEnd="8dp"
-                android:background="@android:color/transparent"
-                android:src="@android:drawable/sym_action_chat"
-                android:contentDescription="@string/chat"
-                android:visibility="gone"
-                app:tint="@android:color/darker_gray" />
+                android:layout_marginEnd="12dp"
+                android:clipChildren="false"
+                android:clipToPadding="false">
 
-            <!-- Payment -->
+                <ImageButton
+                    android:id="@+id/jobChatButton"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/chat"
+                    android:src="@android:drawable/sym_action_chat"
+                    app:tint="@android:color/darker_gray"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/chatUnreadBadge"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="top|end"
+                    android:layout_marginTop="-4dp"
+                    android:layout_marginEnd="-4dp"
+                    android:background="@drawable/badge_circle_red"
+                    android:gravity="center"
+                    android:text="0"
+                    android:textColor="@android:color/white"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    android:elevation="10dp" />
+            </FrameLayout>
+
             <TextView
                 android:id="@+id/jobPayment"
                 android:layout_width="wrap_content"

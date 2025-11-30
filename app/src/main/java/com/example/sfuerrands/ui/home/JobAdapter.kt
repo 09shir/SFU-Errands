@@ -24,6 +24,7 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
         val claimedBadge: TextView = itemView.findViewById(R.id.claimedBadge)
         val chatButton: ImageButton = itemView.findViewById(R.id.jobChatButton)
         val profileButton: ImageButton = itemView.findViewById(R.id.runnerProfileButton)
+        val unreadBadge: TextView = itemView.findViewById(R.id.chatUnreadBadge)  // NEW
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): JobViewHolder {
@@ -57,9 +58,22 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
             holder.chatButton.setOnClickListener {
                 onChatClickListener?.invoke(job)
             }
+
+            // NEW: Show unread badge if there are unread messages
+            if (job.unreadMessageCount > 0) {
+                holder.unreadBadge.visibility = View.VISIBLE
+                holder.unreadBadge.text = if (job.unreadMessageCount > 99) {
+                    "99+"
+                } else {
+                    job.unreadMessageCount.toString()
+                }
+            } else {
+                holder.unreadBadge.visibility = View.GONE
+            }
         } else {
             holder.chatButton.visibility = View.GONE
             holder.chatButton.setOnClickListener(null)
+            holder.unreadBadge.visibility = View.GONE  // NEW
         }
 
         holder.itemView.setOnClickListener {
