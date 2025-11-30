@@ -3,18 +3,37 @@ package com.example.sfuerrands.ui.home
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.ImageButton
+import android.widget.LinearLayout
+import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import android.content.Intent
-import android.widget.ImageButton
 import com.example.sfuerrands.R
+import com.example.sfuerrands.data.models.User
+import com.google.firebase.firestore.DocumentReference
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
-class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.JobViewHolder>() {
+// [CHANGE] Added lifecycleOwner to constructor so we can safely launch coroutines
+class JobAdapter(
+    private var jobs: List<Job>,
+    private val lifecycleOwner: LifecycleOwner? = null
+) : RecyclerView.Adapter<JobAdapter.JobViewHolder>() {
 
     var onJobClickListener: ((Job) -> Unit)? = null
     var onChatClickListener: ((Job) -> Unit)? = null
     var onProfileClickListener: ((Job) -> Unit)? = null
-    var showClaimedBadge: Boolean = false  // NEW: Control whether to show claimed badge
+
+    var onAcceptRunnerListener: ((Job, DocumentReference) -> Unit)? = null
+
+    var showClaimedBadge: Boolean = false
+    var isRequesterMode: Boolean = false
 
     class JobViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val titleTextView: TextView = itemView.findViewById(R.id.jobTitle)
@@ -24,7 +43,11 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
         val claimedBadge: TextView = itemView.findViewById(R.id.claimedBadge)
         val chatButton: ImageButton = itemView.findViewById(R.id.jobChatButton)
         val profileButton: ImageButton = itemView.findViewById(R.id.runnerProfileButton)
-        val unreadBadge: TextView = itemView.findViewById(R.id.chatUnreadBadge)  // NEW
+        val unreadBadge: TextView = itemView.findViewById(R.id.chatUnreadBadge)
+
+        val offerLayout: LinearLayout = itemView.findViewById(R.id.offerSelectionLayout)
+        val offerSpinner: Spinner = itemView.findViewById(R.id.offerSpinner)
+        val acceptOfferButton: Button = itemView.findViewById(R.id.acceptOfferButton)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): JobViewHolder {
@@ -46,7 +69,6 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
             onProfileClickListener?.invoke(job)
         }
 
-        // NEW: Show/hide claimed badge based on isClaimed property
         if (showClaimedBadge && job.isClaimed) {
             holder.claimedBadge.visibility = View.VISIBLE
         } else {
@@ -58,24 +80,75 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
             holder.chatButton.setOnClickListener {
                 onChatClickListener?.invoke(job)
             }
-
-            // NEW: Show unread badge if there are unread messages
             if (job.unreadMessageCount > 0) {
                 holder.unreadBadge.visibility = View.VISIBLE
-                holder.unreadBadge.text = if (job.unreadMessageCount > 99) {
-                    "99+"
-                } else {
-                    job.unreadMessageCount.toString()
-                }
+                holder.unreadBadge.text = if (job.unreadMessageCount > 99) "99+" else job.unreadMessageCount.toString()
             } else {
                 holder.unreadBadge.visibility = View.GONE
             }
         } else {
             holder.chatButton.visibility = View.GONE
             holder.chatButton.setOnClickListener(null)
-            holder.unreadBadge.visibility = View.GONE  // NEW
+            holder.unreadBadge.visibility = View.GONE
         }
 
+        // --- OFFER SYSTEM LOGIC ---
+
+        // 1. Reset state
+        holder.offerLayout.visibility = View.GONE
+        holder.acceptOfferButton.setOnClickListener(null)
+
+        // 2. Check conditions
+        if (isRequesterMode && !job.isClaimed && job.offers.isNotEmpty() && lifecycleOwner != null) {
+
+            // 3. Use the passed-in lifecycleOwner to launch the coroutine safely
+            lifecycleOwner.lifecycleScope.launch {
+                try {
+                    val runnerDisplayNames = mutableListOf<String>()
+                    val runnerRefs = mutableListOf<DocumentReference>()
+
+                    for (ref in job.offers) {
+                        val snapshot = ref.get().await()
+                        val user = snapshot.toObject(User::class.java)
+                        if (user != null) {
+                            val rating = if (user.runnerRatingCount > 0)
+                                String.format("%.1f", user.runnerRatingSum / user.runnerRatingCount)
+                            else "N/A"
+
+                            runnerDisplayNames.add("${user.displayName} (★$rating)")
+                            runnerRefs.add(ref)
+                        }
+                    }
+
+                    if (runnerDisplayNames.isNotEmpty()) {
+                        // Data loaded successfully -> Show UI
+                        holder.offerLayout.visibility = View.VISIBLE
+
+                        val adapter = ArrayAdapter(
+                            holder.itemView.context,
+                            android.R.layout.simple_spinner_item,
+                            runnerDisplayNames
+                        )
+                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                        holder.offerSpinner.adapter = adapter
+
+                        holder.acceptOfferButton.setOnClickListener {
+                            val selectedPos = holder.offerSpinner.selectedItemPosition
+                            if (selectedPos != -1) {
+                                val selectedRunnerRef = runnerRefs[selectedPos]
+                                onAcceptRunnerListener?.invoke(job, selectedRunnerRef)
+                            } else {
+                                Toast.makeText(holder.itemView.context, "Please select a runner", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    holder.offerLayout.visibility = View.GONE
+                }
+            }
+        }
+
+        // Main Item Click
         holder.itemView.setOnClickListener {
             if (onJobClickListener != null) {
                 onJobClickListener?.invoke(job)

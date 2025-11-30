@@ -52,13 +52,13 @@ class JobDetailActivity : AppCompatActivity() {
             finish()
         }
 
-        // Set up accept button
-        binding.acceptButton.setOnClickListener {
+        // Set up offer button (Updated for Offer System #41)
+        binding.offerButton.setOnClickListener {
             val currentUser = Firebase.auth.currentUser
 
             // 1. Check if user is logged in
             if (currentUser == null) {
-                Toast.makeText(this, "You must be logged in to accept jobs", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "You must be logged in to offer help", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -69,26 +69,26 @@ class JobDetailActivity : AppCompatActivity() {
             }
 
             // 3. Disable button to prevent double-clicks
-            binding.acceptButton.isEnabled = false
-            binding.acceptButton.text = "Claiming..."
+            binding.offerButton.isEnabled = false
+            binding.offerButton.text = "Sending Offer..."
 
-            // 4. Perform the claim operation
+            // 4. Perform the offer operation
             lifecycleScope.launch {
                 try {
-                    // Update Firestore via Repository
-                    errandRepository.claimErrand(jobId, currentUser.uid)
+                    // Send offer via Repository instead of claiming directly
+                    errandRepository.sendOffer(jobId, currentUser.uid)
 
-                    Toast.makeText(this@JobDetailActivity, "Job Accepted!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@JobDetailActivity, "Offer Sent!", Toast.LENGTH_SHORT).show()
 
                     // Close activity. The Home list will refresh automatically via the listener.
                     finish()
                 } catch (e: Exception) {
                     // Handle failure
-                    Toast.makeText(this@JobDetailActivity, "Failed to claim: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@JobDetailActivity, "Failed to send offer: ${e.message}", Toast.LENGTH_LONG).show()
 
                     // Re-enable button on failure
-                    binding.acceptButton.isEnabled = true
-                    binding.acceptButton.text = "Accept"
+                    binding.offerButton.isEnabled = true
+                    binding.offerButton.text = "Offer Help"
                 }
             }
         }
