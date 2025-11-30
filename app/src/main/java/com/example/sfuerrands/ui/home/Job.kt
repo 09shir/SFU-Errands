@@ -12,4 +12,5 @@ data class Job(
     val isClaimed: Boolean = false,
     val requester: DocumentReference? = null,
     val runner: DocumentReference? = null,
+    val unreadMessageCount: Int = 0  // NEW: Track unread messages
 )

@@ -106,4 +106,33 @@ class ChatRepository {
             }
         }.await()
     }
+
+    // Count unread messages for current user in an errand
+    suspend fun getUnreadCount(errandId: String, myRef: DocumentReference): Int {
+        val snap = chatCollection(errandId)
+            .whereNotEqualTo("senderId", myRef)
+            .whereEqualTo("read", false)
+            .get()
+            .await()
+        
+        return snap.size()
+    }
+
+    // Listen to unread count changes in real-time
+    fun listenUnreadCount(
+        errandId: String,
+        myRef: DocumentReference,
+        onCountChanged: (Int) -> Unit
+    ): ListenerRegistration {
+        return chatCollection(errandId)
+            .whereNotEqualTo("senderId", myRef)
+            .whereEqualTo("read", false)
+            .addSnapshotListener { snap, e ->
+                if (e != null || snap == null) {
+                    onCountChanged(0)
+                    return@addSnapshotListener
+                }
+                onCountChanged(snap.size())
+            }
+    }
 }
