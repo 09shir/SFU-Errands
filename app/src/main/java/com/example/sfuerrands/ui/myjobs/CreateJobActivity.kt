@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.sfuerrands.data.models.Errand
 import com.example.sfuerrands.data.repository.ErrandRepository
 import com.example.sfuerrands.data.repository.StorageRepository
+import com.example.sfuerrands.data.services.OpenAIService
 import com.example.sfuerrands.databinding.ActivityCreateJobBinding
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
@@ -39,6 +40,7 @@ class CreateJobActivity : AppCompatActivity() {
     private val selectedPhotoUris = mutableListOf<Uri>()
     private val maxPhotos: Int = 3
     private lateinit var photosAdapter: SelectedPhotoAdapter
+    private val openAIService = OpenAIService()
 
     // Activity Result for picking multiple images
     private val pickImages =
@@ -82,6 +84,8 @@ class CreateJobActivity : AppCompatActivity() {
         setupCampusDropdown()
         setupDatePicker()
         setupPhotoPicker()
+
+        setupAiDescriptionRefinement()
 
         binding.submitButton.setOnClickListener {
             submitJob()
@@ -158,6 +162,50 @@ class CreateJobActivity : AppCompatActivity() {
         }
         updatePhotosUi()
 
+    }
+
+    private fun setupAiDescriptionRefinement() {
+        // Change listener from 'descriptionInputLayout.setEndIconOnClickListener' to the new button:
+        binding.btnRefineDescription.setOnClickListener {
+            val currentText = binding.descriptionEditText.text.toString().trim()
+
+            // 1. Validation
+            if (currentText.isEmpty()) {
+                Toast.makeText(this, "Please write something first.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // Check word count to avoid wasting credits on empty nonsense
+            if (currentText.split("\\s+".toRegex()).size < 3) {
+                Toast.makeText(this, "Description is too short to refine.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // 2. UI Loading State
+            val originalButtonText = binding.btnRefineDescription.text
+            binding.btnRefineDescription.text = "Refining..."
+            binding.btnRefineDescription.isEnabled = false
+            binding.descriptionInputLayout.isEnabled = false // Lock input while working
+
+            lifecycleScope.launch {
+                // 3. Call OpenAI (using your existing OpenAIService)
+                val refinedText = openAIService.refineDescription(currentText)
+
+                // 4. Update UI with result
+                if (!refinedText.isNullOrEmpty()) {
+                    binding.descriptionEditText.setText(refinedText)
+                    binding.descriptionEditText.setSelection(refinedText.length) // Move cursor to end
+                    Toast.makeText(this@CreateJobActivity, "✨ Description polished!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this@CreateJobActivity, "AI request failed. Check connection.", Toast.LENGTH_SHORT).show()
+                }
+
+                // 5. Restore Buttons
+                binding.btnRefineDescription.text = originalButtonText
+                binding.btnRefineDescription.isEnabled = true
+                binding.descriptionInputLayout.isEnabled = true
+            }
+        }
     }
 
     private fun submitJob() {

@@ -2,17 +2,17 @@ package com.example.sfuerrands.ui.chat
 
 import android.net.Uri
 import android.os.Bundle
-import android.text.TextUtils
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.sfuerrands.data.models.ChatMessage
 import com.example.sfuerrands.data.repository.ChatRepository
 import com.example.sfuerrands.data.repository.StorageRepository
+import com.example.sfuerrands.data.services.OpenAIService
 import com.example.sfuerrands.databinding.ActivityChatBinding
+import com.google.android.material.chip.Chip
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.async
@@ -50,6 +50,9 @@ class ChatActivity : AppCompatActivity() {
             updateSelectedMediaUi()
         }
 
+    private val openAIService = OpenAIService()
+    private var lastProcessedMessageId: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityChatBinding.inflate(layoutInflater)
@@ -86,6 +89,8 @@ class ChatActivity : AppCompatActivity() {
             sendMessage()
         }
 
+        binding.smartReplyContainer.visibility = View.GONE
+
         listenForMessages()
     }
 
@@ -99,6 +104,21 @@ class ChatActivity : AppCompatActivity() {
                 adapter.submit(msgs)
                 binding.chatRecycler.scrollToPosition(msgs.size.coerceAtLeast(1) - 1)
 
+                val lastMsg = msgs.lastOrNull()
+
+                if (lastMsg != null &&
+                    lastMsg.senderId?.id != currentUid &&
+                    !lastMsg.text.isNullOrBlank() &&
+                    lastMsg.id != lastProcessedMessageId // Assuming ChatMessage has an ID field
+                ) {
+                    lastProcessedMessageId = lastMsg.id // Mark processed
+                    generateSmartSuggestions(lastMsg.text!!, errandTitle)
+                }
+                // If I just sent a message, hide the suggestions
+                else if (lastMsg != null && lastMsg.senderId?.id == currentUid) {
+                    binding.smartReplyContainer.visibility = View.GONE
+                }
+
                 lifecycleScope.launch {
                     chatRepo.markDelivered(errandId, myRef)
                     chatRepo.markRead(errandId, myRef)
@@ -110,8 +130,38 @@ class ChatActivity : AppCompatActivity() {
         )
     }
 
-    private fun sendMessage() {
-        val text = binding.messageInput.text.toString().trim()
+    private fun generateSmartSuggestions(incomingText: String, context: String) {
+        lifecycleScope.launch {
+            val suggestions = openAIService.generateSmartReplies(incomingText, context)
+
+            if (suggestions.isNotEmpty()) {
+                binding.smartReplyGroup.removeAllViews() // Clear old chips
+
+                for (reply in suggestions) {
+                    addChip(reply)
+                }
+
+                binding.smartReplyContainer.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    private fun addChip(text: String) {
+        val chip = Chip(this)
+        chip.text = text
+        chip.setOnClickListener {
+            // Auto-send immediately
+             sendMessage(text)
+
+            // Hide suggestions after clicking
+            binding.smartReplyContainer.visibility = View.GONE
+        }
+        binding.smartReplyGroup.addView(chip)
+    }
+
+    private fun sendMessage(msg: String? = null) {
+        var text = msg
+        text = text?: binding.messageInput.text.toString().trim()
         if (text.isEmpty() && selectedMedia.isEmpty()) {
             return
         }
