@@ -11,6 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:clipChildren="false"
         android:padding="16dp">
 
         <!-- Top Row: Title + Claimed Badge -->
@@ -59,15 +60,15 @@
             android:textSize="14sp"
             android:textColor="@android:color/darker_gray" />
 
-        <!-- Bottom row with location and payment -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
-            <!-- Location -->
             <TextView
                 android:id="@+id/jobLocation"
                 android:layout_width="0dp"
@@ -91,11 +92,13 @@
                 android:visibility="gone"
                 app:tint="@android:color/darker_gray" />
 
-            <!-- Chat Button with Badge Indicator -->
             <FrameLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp">
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="12dp"
+                android:clipChildren="false"
+                android:clipToPadding="false">
 
                 <ImageButton
                     android:id="@+id/jobChatButton"
@@ -104,10 +107,9 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/chat"
                     android:src="@android:drawable/sym_action_chat"
-                    app:tint="@color/design_default_color_primary"
+                    app:tint="@android:color/darker_gray"
                     android:visibility="gone" />
 
-                <!-- Unread Badge -->
                 <TextView
                     android:id="@+id/chatUnreadBadge"
                     android:layout_width="18dp"
@@ -121,10 +123,10 @@
                     android:textColor="@android:color/white"
                     android:textSize="10sp"
                     android:textStyle="bold"
-                    android:visibility="gone" />
+                    android:visibility="gone"
+                    android:elevation="10dp" />
             </FrameLayout>
 
-            <!-- Payment -->
             <TextView
                 android:id="@+id/jobPayment"
                 android:layout_width="wrap_content"
