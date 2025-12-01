@@ -15,7 +15,6 @@
             android:layout_height="wrap_content"
             android:padding="16dp">
 
-            <!-- Icon -->
             <ImageView
                 android:id="@+id/detailJobIcon"
                 android:layout_width="72dp"
@@ -26,7 +25,6 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <!-- Title -->
             <TextView
                 android:id="@+id/detailJobTitle"
                 android:layout_width="0dp"
@@ -41,7 +39,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
 
-            <!-- Media gallery (HORIZONTAL) -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/mediaRecycler"
                 android:layout_width="0dp"
@@ -54,7 +51,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
 
-            <!-- Description BELOW the gallery -->
             <TextView
                 android:id="@+id/detailJobDescription"
                 android:layout_width="0dp"
@@ -69,7 +65,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
 
-            <!-- Location row -->
             <TextView
                 android:id="@+id/locationLabel"
                 android:layout_width="wrap_content"
@@ -93,7 +88,6 @@
                 app:layout_constraintBottom_toBottomOf="@id/locationLabel"
                 app:layout_constraintEnd_toEndOf="parent" />
 
-            <!-- Payment row -->
             <TextView
                 android:id="@+id/paymentLabel"
                 android:layout_width="wrap_content"
@@ -119,7 +113,6 @@
                 app:layout_constraintBottom_toBottomOf="@id/paymentLabel"
                 app:layout_constraintEnd_toEndOf="parent" />
 
-            <!-- Buttons -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -142,13 +135,13 @@
                     android:textColor="@android:color/white" />
 
                 <Button
-                    android:id="@+id/acceptButton"
+                    android:id="@+id/offerButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_weight="1"
                     android:backgroundTint="#4CAF50"
-                    android:text="Accept"
+                    android:text="Offer Help"
                     android:textColor="@android:color/white" />
             </LinearLayout>
 

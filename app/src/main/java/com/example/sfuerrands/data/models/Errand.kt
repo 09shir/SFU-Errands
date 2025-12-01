@@ -19,5 +19,8 @@ data class Errand (
     val createdAt: Timestamp? = null,
     val claimedAt: Timestamp? = null,
     val expectedCompletionAt: Timestamp? = null,
-    val photoUrls: List<String> = emptyList()      // Array of photo URLs
+    val photoUrls: List<String> = emptyList(),      // Array of photo URLs
+
+    // [NEW] List to store references to users who have offered to help
+    val offers: List<DocumentReference> = emptyList()
 )
