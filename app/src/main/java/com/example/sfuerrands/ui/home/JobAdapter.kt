@@ -38,7 +38,7 @@ class JobAdapter(
     class JobViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val titleTextView: TextView = itemView.findViewById(R.id.jobTitle)
         val descriptionTextView: TextView = itemView.findViewById(R.id.jobDescription)
-        val locationTextView: TextView = itemView.findViewById(R.id.jobLocation)
+        val campusTextView: TextView = itemView.findViewById(R.id.jobCampus)
         val paymentTextView: TextView = itemView.findViewById(R.id.jobPayment)
         val claimedBadge: TextView = itemView.findViewById(R.id.claimedBadge)
         val chatButton: ImageButton = itemView.findViewById(R.id.jobChatButton)
@@ -61,15 +61,20 @@ class JobAdapter(
 
         holder.titleTextView.text = job.title
         holder.descriptionTextView.text = job.description
-        holder.locationTextView.text = job.location
+        holder.campusTextView.text = job.campus
         holder.paymentTextView.text = job.payment
 
-        holder.profileButton.visibility = View.VISIBLE
-        holder.profileButton.setOnClickListener {
-            onProfileClickListener?.invoke(job)
+        // disable profile button visibility for requests without runner
+        if (isRequesterMode && job.runner == null) {
+            holder.profileButton.visibility = View.GONE
+        } else {
+            holder.profileButton.visibility = View.VISIBLE
+            holder.profileButton.setOnClickListener {
+                onProfileClickListener?.invoke(job)
+            }
         }
 
-        if (showClaimedBadge && job.isClaimed) {
+        if (isRequesterMode && job.isClaimed) {
             holder.claimedBadge.visibility = View.VISIBLE
         } else {
             holder.claimedBadge.visibility = View.GONE
@@ -80,6 +85,8 @@ class JobAdapter(
             holder.chatButton.setOnClickListener {
                 onChatClickListener?.invoke(job)
             }
+
+            // Show unread badge if there are unread messages
             if (job.unreadMessageCount > 0) {
                 holder.unreadBadge.visibility = View.VISIBLE
                 holder.unreadBadge.text = if (job.unreadMessageCount > 99) "99+" else job.unreadMessageCount.toString()
@@ -158,6 +165,7 @@ class JobAdapter(
                 intent.putExtra("JOB_TITLE", job.title)
                 intent.putExtra("JOB_DESCRIPTION", job.description)
                 intent.putExtra("JOB_LOCATION", job.location)
+                intent.putExtra("JOB_CAMPUS", job.campus)
                 intent.putExtra("JOB_PAYMENT", job.payment)
                 intent.putStringArrayListExtra("JOB_MEDIA_PATHS", ArrayList(job.mediaPaths))
                 holder.itemView.context.startActivity(intent)

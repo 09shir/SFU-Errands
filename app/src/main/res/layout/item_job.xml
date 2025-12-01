@@ -66,11 +66,11 @@
             android:clipToPadding="false">
 
             <TextView
-                android:id="@+id/jobLocation"
+                android:id="@+id/jobCampus"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Location"
+                android:text="Campus"
                 android:textSize="12sp"
                 android:drawableLeft="@android:drawable/ic_menu_mylocation"
                 android:drawablePadding="4dp"

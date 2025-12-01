@@ -93,6 +93,9 @@ class RequestsFragment : Fragment() {
             }
         }
 
+        // disable profile button visibility for requests without runner
+        // show claimed badge for requests that's claimed
+
         // Override the click to open "Edit Job" instead of "View Job"
         jobAdapter.onJobClickListener = { job ->
             // Find the full Errand object by matching the ID
@@ -210,7 +213,9 @@ class RequestsFragment : Fragment() {
                 id = errand.id,
                 title = errand.title,
                 description = errand.description,
-                location = errand.location ?: "N/A",
+                // past data had lowercase campus names
+                campus = errand.campus.replaceFirstChar{it.uppercaseChar()},
+                location = errand.location?:"N/A",
                 payment = errand.priceOffered?.let { "$$it" } ?: "Free",
                 mediaPaths = errand.photoUrls,
                 isClaimed = errand.status == "claimed" || errand.runnerId != null,
