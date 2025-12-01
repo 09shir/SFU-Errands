@@ -15,8 +15,6 @@ import com.example.sfuerrands.BuildConfig
 
 class OpenAIService {
 
-    // TODO: Replace with your actual OpenAI API Key
-    // WARNING: Do not commit this key to public GitHub repos!
     private val apiKey = BuildConfig.OPENAI_API_KEY
 
     private val client = OkHttpClient.Builder()
