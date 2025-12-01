@@ -90,7 +90,8 @@ class HomeFragment : Fragment() {
                         id = e.id,
                         title = e.title,
                         description = e.description,
-                        location = e.campus,
+                        // past data had lowercase campus names
+                        location = e.campus.replaceFirstChar{it.uppercaseChar()},
                         payment = e.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "$0.00",
                         mediaPaths = e.photoUrls,
                         requester = e.requesterId
