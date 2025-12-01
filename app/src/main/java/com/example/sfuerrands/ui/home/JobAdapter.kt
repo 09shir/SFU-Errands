@@ -13,7 +13,6 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
     var onJobClickListener: ((Job) -> Unit)? = null
     var onChatClickListener: ((Job) -> Unit)? = null
     var onProfileClickListener: ((Job) -> Unit)? = null
-    var requestTab: Boolean = false
 
     class JobViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val titleTextView: TextView = itemView.findViewById(R.id.jobTitle)
@@ -41,7 +40,7 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
         holder.paymentTextView.text = job.payment
 
         // disable profile button visibility for requests without runner
-        if (requestTab && job.runner == null) {
+        if (isRequesterMode && job.runner == null) {
             holder.profileButton.visibility = View.GONE
         } else {
             holder.profileButton.visibility = View.VISIBLE
@@ -50,7 +49,7 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
             }
         }
 
-        if (requestTab && job.isClaimed) {
+        if (isRequesterMode && job.isClaimed) {
             holder.claimedBadge.visibility = View.VISIBLE
         } else {
             holder.claimedBadge.visibility = View.GONE

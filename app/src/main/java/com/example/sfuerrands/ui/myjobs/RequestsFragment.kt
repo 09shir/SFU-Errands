@@ -79,7 +79,6 @@ class RequestsFragment : Fragment() {
 
         // disable profile button visibility for requests without runner
         // show claimed badge for requests that's claimed
-        jobAdapter.requestTab = true
 
         // Override the click to open "Edit Job" instead of "View Job"
         jobAdapter.onJobClickListener = { job ->
