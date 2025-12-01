@@ -108,7 +108,7 @@ class ProfileDisplayActivity : AppCompatActivity() {
             val rating = if (user.runnerRatingCount > 0) {
                 user.runnerRatingSum / user.runnerRatingCount
             } else 0.0
-            binding.tvRating.text = String.format("%.1f (%d jobs run)", rating, user.runnerRatingCount)
+            binding.tvRating.text = String.format("%.1f (%d reviews)", rating, user.runnerRatingCount)
 
         } else {
             // Show REQUESTER Badge (Blue)
@@ -119,7 +119,7 @@ class ProfileDisplayActivity : AppCompatActivity() {
             val rating = if (user.requesterRatingCount > 0) {
                 user.requesterRatingSum / user.requesterRatingCount
             } else 0.0
-            binding.tvRating.text = String.format("%.1f (%d jobs posted)", rating, user.requesterRatingCount)
+            binding.tvRating.text = String.format("%.1f (%d reviews)", rating, user.requesterRatingCount)
         }
     }
 }
