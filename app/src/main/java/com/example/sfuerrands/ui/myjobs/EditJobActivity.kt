@@ -42,6 +42,10 @@ class EditJobActivity : AppCompatActivity() {
     
     // Maximum number of photos allowed
     private val maxPhotos = 3
+
+    // Completion flags (requester view)
+    private var clientCompletion: Boolean = false
+    private var runnerCompletion: Boolean = false
     
     // Activity Result for picking multiple images
     private val pickImages =
@@ -85,7 +89,7 @@ class EditJobActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Edit Job"
 
-        // --- 1. RETRIEVE DATA FROM INTENT ---
+        // --- RETRIEVE DATA FROM INTENT ---
         // Get all the errand data that was passed from RequestsFragment
         errandId = intent.getStringExtra("ERRAND_ID") ?: ""
         val title = intent.getStringExtra("ERRAND_TITLE") ?: ""
@@ -95,16 +99,20 @@ class EditJobActivity : AppCompatActivity() {
         val location = intent.getStringExtra("ERRAND_LOCATION") ?: ""
         isClaimed = intent.getBooleanExtra("ERRAND_IS_CLAIMED", false)
         originalPhotoUrls = intent.getStringArrayListExtra("ERRAND_PHOTO_URLS") ?: emptyList()
-        
+
+        // Read completion flags passed in
+        clientCompletion = intent.getBooleanExtra("ERRAND_CLIENT_COMPLETION", false)
+        runnerCompletion = intent.getBooleanExtra("ERRAND_RUNNER_COMPLETION", false)
+
         // Debug: Log photo URLs
         android.util.Log.d("EditJobActivity", "Received ${originalPhotoUrls.size} photos: $originalPhotoUrls")
 
-        // --- 2. SET UP CAMPUS DROPDOWN ---
+        // --- SET UP CAMPUS DROPDOWN ---
         val campuses = arrayOf("burnaby", "surrey", "vancouver")
         val campusAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, campuses)
         binding.campusEditText.setAdapter(campusAdapter)
 
-        // --- 3. POPULATE FORM FIELDS ---
+        // --- POPULATE FORM FIELDS ---
         // Set the text in the input fields with existing data
         binding.titleEditText.setText(title)
         binding.descriptionEditText.setText(description)
@@ -117,6 +125,10 @@ class EditJobActivity : AppCompatActivity() {
 
         // --- 5. SET UP UI BASED ON CLAIMED STATUS ---
         setupUI()
+
+        binding.markCompleteButton.setOnClickListener {
+            markRequesterComplete()
+        }
     }
     
     // Convert Firebase Storage gs:// URLs to download URLs and set up photo display
@@ -240,11 +252,16 @@ class EditJobActivity : AppCompatActivity() {
             finish()
         }
 
-        // --- HANDLE CLAIMED vs UNCLAIMED STATE ---
-        if (isClaimed) {
-            // STATE: CLAIMED (Read-Only)
-            // User cannot edit or delete a claimed errand
+        // Show the Mark Complete button unless clientCompletion == true
+        binding.markCompleteButton.visibility = if (clientCompletion) View.GONE else View.VISIBLE
+        binding.markCompleteStatusText.visibility = if (clientCompletion) View.VISIBLE else View.GONE
+        if (clientCompletion) {
+            binding.markCompleteStatusText.text = "You marked this as complete"
+        }
 
+        // Handle claimed vs unclaimed for editing + delete visibility
+        if (isClaimed) {
+            // Claimed: read-only except Delete may reappear later
             binding.titleEditText.isEnabled = false
             binding.descriptionEditText.isEnabled = false
             binding.campusEditText.isEnabled = false
@@ -256,13 +273,12 @@ class EditJobActivity : AppCompatActivity() {
             binding.warningTextView.text = "This errand has been claimed and can no longer be edited."
 
             binding.saveButton.visibility = View.GONE
-            binding.deleteButton.visibility = View.GONE
+            // Delete visible only when both sides have completed
+            val bothComplete = clientCompletion && runnerCompletion
+            binding.deleteButton.visibility = if (bothComplete) View.VISIBLE else View.GONE
             binding.backButton.visibility = View.VISIBLE
-
         } else {
-            // STATE: UNCLAIMED (Editable)
-            // User can edit and delete
-
+            // Unclaimed: fully editable, delete allowed
             binding.titleEditText.isEnabled = true
             binding.descriptionEditText.isEnabled = true
             binding.campusEditText.isEnabled = true
@@ -275,6 +291,39 @@ class EditJobActivity : AppCompatActivity() {
             binding.saveButton.visibility = View.VISIBLE
             binding.deleteButton.visibility = View.VISIBLE
             binding.backButton.visibility = View.VISIBLE
+        }
+    }
+
+    private fun markRequesterComplete() {
+        // Disable button to prevent double sends
+        binding.markCompleteButton.isEnabled = false
+        binding.markCompleteButton.text = "Marking..."
+
+        lifecycleScope.launch {
+            try {
+                errandRepository.updateErrand(
+                    errandId,
+                    mapOf("clientCompletion" to true)
+                )
+
+                clientCompletion = true
+                binding.markCompleteButton.visibility = View.GONE
+                binding.markCompleteStatusText.visibility = View.VISIBLE
+                binding.markCompleteStatusText.text = "You marked this as complete"
+
+                // If both sides completed, allow delete
+                val bothComplete = clientCompletion && runnerCompletion
+                if (bothComplete) {
+                    binding.deleteButton.visibility = View.VISIBLE
+                }
+
+                Toast.makeText(this@EditJobActivity, "Marked as complete!", Toast.LENGTH_SHORT).show()
+
+            } catch (e: Exception) {
+                Toast.makeText(this@EditJobActivity, "Failed: ${e.message}", Toast.LENGTH_LONG).show()
+                binding.markCompleteButton.isEnabled = true
+                binding.markCompleteButton.text = "Mark as Complete"
+            }
         }
     }
 
