@@ -10,8 +10,10 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.example.sfuerrands.data.repository.ErrandRepository
 import com.example.sfuerrands.databinding.ActivityTaskDetailBinding
 import com.example.sfuerrands.ui.home.MediaAdapter
+import com.example.sfuerrands.ui.home.RatingDialog
 import com.example.sfuerrands.ui.preview.ImagePreviewNavigator
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -26,6 +28,10 @@ class TaskDetailActivity : AppCompatActivity() {
     private var photoUrls: List<String> = emptyList()
     private var downloadUrls: List<String> = emptyList()
     private lateinit var mediaAdapter: MediaAdapter
+
+    // requester reference for rating
+    private var requesterRef: DocumentReference? = null
+    private var runnerCompletion: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,18 +59,31 @@ class TaskDetailActivity : AppCompatActivity() {
         binding.priceText.text = "Payment: $${"%.2f".format(price)}"
         binding.locationText.text = if (location.isNotEmpty()) "Location: $location" else "Location: Not specified"
 
-        // Show completion status
+        // initial completion UI
         if (runnerCompletion) {
             binding.completionStatusText.visibility = View.VISIBLE
             binding.completionStatusText.text = "✓ You marked this as complete"
             binding.markCompleteButton.isEnabled = false
             binding.markCompleteButton.text = "Already Marked Complete"
+            binding.markCompleteButton.visibility = View.GONE
         } else {
             binding.completionStatusText.visibility = View.GONE
+            binding.markCompleteButton.visibility = View.VISIBLE
+            binding.markCompleteButton.isEnabled = true
+            binding.markCompleteButton.text = "Mark as Complete"
         }
 
         // Convert and display photos
         convertPhotoUrls()
+
+        // Load errand to get requester ref (for rating)
+        lifecycleScope.launch {
+            try {
+                val errand = errandRepository.getErrandById(errandId)
+                requesterRef = errand?.requesterId
+            } catch (e: Exception) {
+            }
+        }
 
         // Button listeners
         binding.markCompleteButton.setOnClickListener {
@@ -137,10 +156,7 @@ class TaskDetailActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 // Update runnerCompletion to true
-                errandRepository.updateErrand(
-                    errandId,
-                    mapOf("runnerCompletion" to true)
-                )
+                errandRepository.setRunnerCompleted(errandId)
 
                 Toast.makeText(this@TaskDetailActivity, "Marked as complete!", Toast.LENGTH_SHORT).show()
 
@@ -148,6 +164,28 @@ class TaskDetailActivity : AppCompatActivity() {
                 binding.completionStatusText.visibility = View.VISIBLE
                 binding.completionStatusText.text = "✓ You marked this as complete"
                 binding.markCompleteButton.text = "Already Marked Complete"
+                binding.markCompleteButton.isEnabled = false
+                binding.markCompleteButton.visibility = View.GONE
+
+                // Show rating dialog for the requester if available
+                requesterRef?.let { ref ->
+                    RatingDialog.show(this@TaskDetailActivity) { rating ->
+                        lifecycleScope.launch {
+                            try {
+                                // runner is rating the requester -> update requester's requesterRating*
+                                errandRepository.updateUserRating(ref, rating)
+                                Toast.makeText(this@TaskDetailActivity, "Thanks for the rating!", Toast.LENGTH_SHORT).show()
+                            } catch (e: Exception) {
+                                Toast.makeText(this@TaskDetailActivity, "Failed to save rating: ${e.message}", Toast.LENGTH_SHORT).show()
+                            } finally {
+                                finish() // go back to tasks list
+                            }
+                        }
+                    }
+                } ?: run {
+                    // No requester ref — just finish
+                    finish()
+                }
 
             } catch (e: Exception) {
                 Toast.makeText(this@TaskDetailActivity, "Failed: ${e.message}", Toast.LENGTH_LONG).show()
