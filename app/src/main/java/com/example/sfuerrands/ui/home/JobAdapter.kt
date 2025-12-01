@@ -48,7 +48,6 @@ class JobAdapter(
         val offerLayout: LinearLayout = itemView.findViewById(R.id.offerSelectionLayout)
         val offerSpinner: Spinner = itemView.findViewById(R.id.offerSpinner)
         val acceptOfferButton: Button = itemView.findViewById(R.id.acceptOfferButton)
-
         val completedBadge: TextView = itemView.findViewById(R.id.completedBadge)
     }
 
@@ -83,7 +82,7 @@ class JobAdapter(
             }
         }
 
-        if (isRequesterMode && job.isClaimed) {
+        if (isRequesterMode && job.isClaimed && !job.isCompleted) {
             holder.claimedBadge.visibility = View.VISIBLE
         } else {
             holder.claimedBadge.visibility = View.GONE
