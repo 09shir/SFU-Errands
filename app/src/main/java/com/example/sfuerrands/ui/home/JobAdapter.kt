@@ -10,11 +10,10 @@ import android.widget.ImageButton
 import com.example.sfuerrands.R
 
 class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.JobViewHolder>() {
-
     var onJobClickListener: ((Job) -> Unit)? = null
     var onChatClickListener: ((Job) -> Unit)? = null
     var onProfileClickListener: ((Job) -> Unit)? = null
-    var showClaimedBadge: Boolean = false  // NEW: Control whether to show claimed badge
+    var requestTab: Boolean = false
 
     class JobViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val titleTextView: TextView = itemView.findViewById(R.id.jobTitle)
@@ -41,13 +40,17 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
         holder.campusTextView.text = job.campus
         holder.paymentTextView.text = job.payment
 
-        holder.profileButton.visibility = View.VISIBLE
-        holder.profileButton.setOnClickListener {
-            onProfileClickListener?.invoke(job)
+        // disable profile button visibility for requests without runner
+        if (requestTab && job.runner == null) {
+            holder.profileButton.visibility = View.GONE
+        } else {
+            holder.profileButton.visibility = View.VISIBLE
+            holder.profileButton.setOnClickListener {
+                onProfileClickListener?.invoke(job)
+            }
         }
 
-        // NEW: Show/hide claimed badge based on isClaimed property
-        if (showClaimedBadge && job.isClaimed) {
+        if (requestTab && job.isClaimed) {
             holder.claimedBadge.visibility = View.VISIBLE
         } else {
             holder.claimedBadge.visibility = View.GONE
@@ -59,7 +62,7 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
                 onChatClickListener?.invoke(job)
             }
 
-            // NEW: Show unread badge if there are unread messages
+            // Show unread badge if there are unread messages
             if (job.unreadMessageCount > 0) {
                 holder.unreadBadge.visibility = View.VISIBLE
                 holder.unreadBadge.text = if (job.unreadMessageCount > 99) {
@@ -73,7 +76,7 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
         } else {
             holder.chatButton.visibility = View.GONE
             holder.chatButton.setOnClickListener(null)
-            holder.unreadBadge.visibility = View.GONE  // NEW
+            holder.unreadBadge.visibility = View.GONE
         }
 
         holder.itemView.setOnClickListener {

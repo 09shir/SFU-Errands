@@ -77,6 +77,10 @@ class RequestsFragment : Fragment() {
         // Create the adapter with empty list initially
         jobAdapter = JobAdapter(emptyList())
 
+        // disable profile button visibility for requests without runner
+        // show claimed badge for requests that's claimed
+        jobAdapter.requestTab = true
+
         // Override the click to open "Edit Job" instead of "View Job"
         jobAdapter.onJobClickListener = { job ->
             // Find the full Errand object by matching the ID
