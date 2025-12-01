@@ -147,4 +147,39 @@ class ErrandRepository {
             .await()
     }
 
+    suspend fun setRunnerCompleted(errandId: String) {
+        db.collection("errands").document(errandId)
+            .update("runnerCompletion", true)
+            .await()
+    }
+
+    suspend fun setRequesterCompleted(errandId: String) {
+        db.collection("errands").document(errandId)
+            .update("clientCompletion", true)
+            .await()
+    }
+
+    suspend fun updateUserRating(userRef: DocumentReference, rating: Int) {
+        db.runTransaction { txn ->
+            val snapshot = txn.get(userRef)
+            val isRunner = snapshot.getLong("runnerRatingCount") != null
+
+            if (isRunner) {
+                val count = snapshot.getLong("runnerRatingCount") ?: 0
+                val sum = snapshot.getLong("runnerRatingSum") ?: 0
+                txn.update(userRef,
+                    "runnerRatingCount", count + 1,
+                    "runnerRatingSum", sum + rating
+                )
+            } else {
+                val count = snapshot.getLong("requestorRatingCount") ?: 0
+                val sum = snapshot.getLong("requestorRatingSum") ?: 0
+                txn.update(userRef,
+                    "requestorRatingCount", count + 1,
+                    "requestorRatingSum", sum + rating
+                )
+            }
+        }.await()
+    }
+
 }

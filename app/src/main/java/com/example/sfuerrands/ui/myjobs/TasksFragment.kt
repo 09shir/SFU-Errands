@@ -162,14 +162,19 @@ class TasksFragment : Fragment() {
             }
         )
     }
-    
+
     private fun updateJobsList() {
-        val jobs = currentErrands.map { errand ->
+        // Split errands by runnerCompletion flag (active first, completed last)
+        val active = currentErrands.filter { !it.runnerCompletion }
+        val completed = currentErrands.filter { it.runnerCompletion }
+
+        val ordered = active + completed
+
+        val jobs = ordered.map { errand ->
             Job(
                 id = errand.id,
                 title = errand.title,
                 description = errand.description,
-                // past data had lowercase campus names
                 campus = errand.campus.replaceFirstChar{it.uppercaseChar()},
                 location = errand.location?: "N/A",
                 payment = errand.priceOffered?.let { "$$it" } ?: "Free",
@@ -177,7 +182,9 @@ class TasksFragment : Fragment() {
                 isClaimed = errand.status == "claimed" || errand.runnerId != null,
                 requester = errand.requesterId,
                 runner = errand.runnerId,
-                unreadMessageCount = unreadCounts[errand.id] ?: 0
+                unreadMessageCount = unreadCounts[errand.id] ?: 0,
+                offers = errand.offers,
+                isCompleted = errand.runnerCompletion // indicate completed from runner perspective
             )
         }
         jobAdapter.submitList(jobs)

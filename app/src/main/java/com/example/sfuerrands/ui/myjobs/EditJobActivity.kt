@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.example.sfuerrands.data.repository.ErrandRepository
 import com.example.sfuerrands.data.repository.StorageRepository
 import com.example.sfuerrands.databinding.ActivityEditJobBinding
+import com.example.sfuerrands.ui.home.RatingDialog
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -31,15 +32,19 @@ class EditJobActivity : AppCompatActivity() {
     // Store whether the errand is claimed
     private var isClaimed: Boolean = false
 
+    // Store whether requester/runner have completed
+    private var clientCompleted: Boolean = false
+    private var runnerCompleted: Boolean = false
+
     // Store existing photo URLs (gs:// format from Firebase)
     private var originalPhotoUrls: List<String> = emptyList()
-    
+
     // Store all current photos (existing + new)
     private val currentPhotos = mutableListOf<PhotoItem>()
-    
+
     // Adapter for displaying editable photos
     private lateinit var photoAdapter: EditablePhotoAdapter
-    
+
     // Maximum number of photos allowed
     private val maxPhotos = 3
     
@@ -117,6 +122,23 @@ class EditJobActivity : AppCompatActivity() {
 
         // --- 5. SET UP UI BASED ON CLAIMED STATUS ---
         setupUI()
+
+        // Load fresh errand fields to determine completion status & runner ref
+        lifecycleScope.launch {
+            try {
+                val errand = errandRepository.getErrandById(errandId)
+                clientCompleted = errand?.clientCompletion ?: false
+                runnerCompleted = errand?.runnerCompletion ?: false
+                isClaimed = errand?.runnerId != null
+
+                // Update UI after fetching live data
+                runOnUiThread {
+                    updateCompletionUI()
+                }
+            } catch (_: Exception) {
+                // ignore
+            }
+        }
     }
     
     // Convert Firebase Storage gs:// URLs to download URLs and set up photo display
@@ -235,6 +257,11 @@ class EditJobActivity : AppCompatActivity() {
             confirmDelete()
         }
 
+        //complete button
+        binding.requesterCompleteButton.setOnClickListener {
+            markRequesterComplete()
+        }
+
         // Back Button - Just close the screen
         binding.backButton.setOnClickListener {
             finish()
@@ -242,9 +269,7 @@ class EditJobActivity : AppCompatActivity() {
 
         // --- HANDLE CLAIMED vs UNCLAIMED STATE ---
         if (isClaimed) {
-            // STATE: CLAIMED (Read-Only)
-            // User cannot edit or delete a claimed errand
-
+            // Claimed: editing locked, delete hidden (until both confirm)
             binding.titleEditText.isEnabled = false
             binding.descriptionEditText.isEnabled = false
             binding.campusEditText.isEnabled = false
@@ -256,6 +281,7 @@ class EditJobActivity : AppCompatActivity() {
             binding.warningTextView.text = "This errand has been claimed and can no longer be edited."
 
             binding.saveButton.visibility = View.GONE
+            // delete will be controlled dynamically by completion flags
             binding.deleteButton.visibility = View.GONE
             binding.backButton.visibility = View.VISIBLE
 
@@ -275,6 +301,38 @@ class EditJobActivity : AppCompatActivity() {
             binding.saveButton.visibility = View.VISIBLE
             binding.deleteButton.visibility = View.VISIBLE
             binding.backButton.visibility = View.VISIBLE
+        }
+
+        updateCompletionUI()
+    }
+
+    // Update completion-specific UI elements (requester completion button and delete visibility)
+    private fun updateCompletionUI() {
+        // Show requester completion button only if the errand is claimed and requester hasn't completed yet
+        if (isClaimed && !clientCompleted) {
+            binding.requesterCompleteButton.visibility = View.VISIBLE
+            binding.requesterCompleteButton.isEnabled = true
+            binding.requesterCompleteButton.text = "Mark as Complete"
+        } else {
+            binding.requesterCompleteButton.visibility = View.GONE
+        }
+
+        // Delete should show only when unclaimed OR both sides have completed
+        binding.deleteButton.visibility = if (!isClaimed || (clientCompleted && runnerCompleted)) View.VISIBLE else View.GONE
+
+        // Show informational status
+        if (clientCompleted) {
+            binding.requesterCompletionStatus.visibility = View.VISIBLE
+            binding.requesterCompletionStatus.text = "✓ You marked this as complete"
+        } else {
+            binding.requesterCompletionStatus.visibility = View.GONE
+        }
+
+        if (runnerCompleted) {
+            binding.runnerCompletionStatus.visibility = View.VISIBLE
+            binding.runnerCompletionStatus.text = "✓ Runner marked as complete"
+        } else {
+            binding.runnerCompletionStatus.visibility = View.GONE
         }
     }
 
@@ -426,6 +484,58 @@ class EditJobActivity : AppCompatActivity() {
                 // Re-enable the delete button
                 binding.deleteButton.isEnabled = true
                 binding.deleteButton.text = "Delete"
+            }
+        }
+    }
+
+    private fun markRequesterComplete() {
+        binding.requesterCompleteButton.isEnabled = false
+        binding.requesterCompleteButton.text = "Marking..."
+
+        lifecycleScope.launch {
+            try {
+                // Update clientCompletion to true
+                errandRepository.setRequesterCompleted(errandId)
+
+                Toast.makeText(this@EditJobActivity, "Marked as complete!", Toast.LENGTH_SHORT).show()
+
+                // Update flags and UI
+                clientCompleted = true
+                updateCompletionUI()
+
+                // Load errand again to get runner ref
+                val errand = errandRepository.getErrandById(errandId)
+                val runnerRef = errand?.runnerId
+
+                // If there is a runner, show rating dialog for runner
+                runnerRef?.let { ref ->
+                    RatingDialog.show(this@EditJobActivity) { rating ->
+                        lifecycleScope.launch {
+                            try {
+                                // requester rates the runner -> update runner's runnerRating*
+                                errandRepository.updateUserRating(ref, rating)
+                                Toast.makeText(this@EditJobActivity, "Thanks for the rating!", Toast.LENGTH_SHORT).show()
+                            } catch (e: Exception) {
+                                Toast.makeText(this@EditJobActivity, "Failed to save rating: ${e.message}", Toast.LENGTH_SHORT).show()
+                            } finally {
+                                // After rating, check whether both sides have completed to enable delete
+                                val refreshed = errandRepository.getErrandById(errandId)
+                                clientCompleted = refreshed?.clientCompletion ?: clientCompleted
+                                runnerCompleted = refreshed?.runnerCompletion ?: runnerCompleted
+                                updateCompletionUI()
+                                finish()
+                            }
+                        }
+                    }
+                } ?: run {
+                    // No runner -> just update UI & finish
+                    finish()
+                }
+
+            } catch (e: Exception) {
+                Toast.makeText(this@EditJobActivity, "Failed: ${e.message}", Toast.LENGTH_LONG).show()
+                binding.requesterCompleteButton.isEnabled = true
+                binding.requesterCompleteButton.text = "Mark as Complete"
             }
         }
     }

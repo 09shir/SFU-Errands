@@ -16,5 +16,8 @@ data class Job(
     val unreadMessageCount: Int = 0,
 
     // [NEW] List of offers for the UI to display in the dropdown
-    val offers: List<DocumentReference> = emptyList()
+    val offers: List<DocumentReference> = emptyList(),
+
+    // whether this item should be presented as completed for the current viewer
+    val isCompleted: Boolean = false
 )

@@ -48,6 +48,7 @@ class JobAdapter(
         val offerLayout: LinearLayout = itemView.findViewById(R.id.offerSelectionLayout)
         val offerSpinner: Spinner = itemView.findViewById(R.id.offerSpinner)
         val acceptOfferButton: Button = itemView.findViewById(R.id.acceptOfferButton)
+        val completedBadge: TextView = itemView.findViewById(R.id.completedBadge)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): JobViewHolder {
@@ -64,6 +65,13 @@ class JobAdapter(
         holder.campusTextView.text = job.campus
         holder.paymentTextView.text = job.payment
 
+        // Completed badge (visible when job.isCompleted is true)
+        if (job.isCompleted) {
+            holder.completedBadge.visibility = View.VISIBLE
+        } else {
+            holder.completedBadge.visibility = View.GONE
+        }
+
         // disable profile button visibility for requests without runner
         if (isRequesterMode && job.runner == null) {
             holder.profileButton.visibility = View.GONE
@@ -74,7 +82,7 @@ class JobAdapter(
             }
         }
 
-        if (isRequesterMode && job.isClaimed) {
+        if (isRequesterMode && job.isClaimed && !job.isCompleted) {
             holder.claimedBadge.visibility = View.VISIBLE
         } else {
             holder.claimedBadge.visibility = View.GONE
