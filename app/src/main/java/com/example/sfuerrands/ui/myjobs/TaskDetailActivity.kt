@@ -165,41 +165,34 @@ class TaskDetailActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                // Update runnerCompletion to true
+                // Update runnerCompletion to true in Firestore
                 errandRepository.setRunnerCompleted(errandId)
 
-                Toast.makeText(this@TaskDetailActivity, "Marked as complete!", Toast.LENGTH_SHORT).show()
-
-                // Update UI
-                binding.completionStatusText.visibility = View.VISIBLE
-                binding.completionStatusText.text = "✓ You marked this as complete"
-                binding.markCompleteButton.text = "Already Marked Complete"
-                binding.markCompleteButton.isEnabled = false
-                binding.markCompleteButton.visibility = View.GONE
-
+                // Refresh from DB (optional but safe)
                 val refreshed = errandRepository.getErrandById(errandId)
                 clientCompleted = refreshed?.clientCompletion ?: clientCompleted
                 runnerCompletedFlag = refreshed?.runnerCompletion ?: true
+
+                // Update UI based on new flags
                 updateCompletionUI()
 
+                Toast.makeText(this@TaskDetailActivity, "Marked as complete!", Toast.LENGTH_SHORT).show()
 
                 // Show rating dialog for the requester if available
                 requesterRef?.let { ref ->
                     RatingDialog.show(this@TaskDetailActivity) { rating ->
                         lifecycleScope.launch {
                             try {
-                                // runner is rating the requester -> update requester's requesterRating*
                                 errandRepository.updateUserRating(ref, rating)
                                 Toast.makeText(this@TaskDetailActivity, "Thanks for the rating!", Toast.LENGTH_SHORT).show()
                             } catch (e: Exception) {
                                 Toast.makeText(this@TaskDetailActivity, "Failed to save rating: ${e.message}", Toast.LENGTH_SHORT).show()
                             } finally {
-                                finish() // go back to tasks list
+                                finish()
                             }
                         }
                     }
                 } ?: run {
-                    // No requester ref — just finish
                     finish()
                 }
 
@@ -210,6 +203,7 @@ class TaskDetailActivity : AppCompatActivity() {
             }
         }
     }
+
     private fun showCompletionWarning() {
         AlertDialog.Builder(this)
             .setTitle("Confirm Completion")
@@ -271,10 +265,13 @@ class TaskDetailActivity : AppCompatActivity() {
             binding.completionStatusText.visibility = View.VISIBLE
             binding.completionStatusText.text = "✓ You marked this as complete"
             binding.markCompleteButton.visibility = View.GONE
+            binding.markCompleteButton.isEnabled = false
+            binding.markCompleteButton.text = "Already Marked Complete"
         } else {
             binding.completionStatusText.visibility = View.GONE
             binding.markCompleteButton.visibility = View.VISIBLE
-            binding.markCompleteButton.isEnabled = !clientCompleted
+            binding.markCompleteButton.isEnabled = true
+            binding.markCompleteButton.text = "Mark as Complete"
         }
 
         // Show requester completion status
@@ -288,6 +285,7 @@ class TaskDetailActivity : AppCompatActivity() {
         // Runner shouldn't unclaim after requester marked complete
         binding.unclaimButton.visibility = if (!clientCompleted) View.VISIBLE else View.GONE
     }
+
 
 
     override fun onSupportNavigateUp(): Boolean {
