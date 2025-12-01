@@ -194,7 +194,8 @@ class RequestsFragment : Fragment() {
                 id = errand.id,
                 title = errand.title,
                 description = errand.description,
-                location = errand.location ?: "N/A",
+                // past data had lowercase campus names
+                location = errand.campus.replaceFirstChar{it.uppercaseChar()},
                 payment = errand.priceOffered?.let { "$$it" } ?: "Free",
                 mediaPaths = errand.photoUrls,
                 isClaimed = errand.status == "claimed" || errand.runnerId != null,
