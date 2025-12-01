@@ -33,6 +33,11 @@ class TaskDetailActivity : AppCompatActivity() {
     private var requesterRef: DocumentReference? = null
     private var runnerCompletion: Boolean = false
 
+    private var isClaimed: Boolean = false
+    private var clientCompleted: Boolean = false
+    private var runnerCompletedFlag: Boolean = false
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityTaskDetailBinding.inflate(layoutInflater)
@@ -59,19 +64,19 @@ class TaskDetailActivity : AppCompatActivity() {
         binding.priceText.text = "Payment: $${"%.2f".format(price)}"
         binding.locationText.text = if (location.isNotEmpty()) "Location: $location" else "Location: Not specified"
 
-        // initial completion UI
-        if (runnerCompletion) {
-            binding.completionStatusText.visibility = View.VISIBLE
-            binding.completionStatusText.text = "✓ You marked this as complete"
-            binding.markCompleteButton.isEnabled = false
-            binding.markCompleteButton.text = "Already Marked Complete"
-            binding.markCompleteButton.visibility = View.GONE
-        } else {
-            binding.completionStatusText.visibility = View.GONE
-            binding.markCompleteButton.visibility = View.VISIBLE
-            binding.markCompleteButton.isEnabled = true
-            binding.markCompleteButton.text = "Mark as Complete"
-        }
+//        // initial completion UI
+//        if (runnerCompletion) {
+//            binding.completionStatusText.visibility = View.VISIBLE
+//            binding.completionStatusText.text = "✓ You marked this as complete"
+//            binding.markCompleteButton.isEnabled = false
+//            binding.markCompleteButton.text = "Already Marked Complete"
+//            binding.markCompleteButton.visibility = View.GONE
+//        } else {
+//            binding.completionStatusText.visibility = View.GONE
+//            binding.markCompleteButton.visibility = View.VISIBLE
+//            binding.markCompleteButton.isEnabled = true
+//            binding.markCompleteButton.text = "Mark as Complete"
+//        }
 
         // Convert and display photos
         convertPhotoUrls()
@@ -81,13 +86,18 @@ class TaskDetailActivity : AppCompatActivity() {
             try {
                 val errand = errandRepository.getErrandById(errandId)
                 requesterRef = errand?.requesterId
-            } catch (e: Exception) {
-            }
+
+                clientCompleted = errand?.clientCompletion ?: false
+                runnerCompletedFlag = errand?.runnerCompletion ?: false
+                isClaimed = errand?.runnerId != null
+
+                updateCompletionUI()
+            } catch (e: Exception) {}
         }
 
         // Button listeners
         binding.markCompleteButton.setOnClickListener {
-            markAsComplete()
+            showCompletionWarning()
         }
 
         binding.unclaimButton.setOnClickListener {
@@ -167,6 +177,12 @@ class TaskDetailActivity : AppCompatActivity() {
                 binding.markCompleteButton.isEnabled = false
                 binding.markCompleteButton.visibility = View.GONE
 
+                val refreshed = errandRepository.getErrandById(errandId)
+                clientCompleted = refreshed?.clientCompletion ?: clientCompleted
+                runnerCompletedFlag = refreshed?.runnerCompletion ?: true
+                updateCompletionUI()
+
+
                 // Show rating dialog for the requester if available
                 requesterRef?.let { ref ->
                     RatingDialog.show(this@TaskDetailActivity) { rating ->
@@ -194,6 +210,21 @@ class TaskDetailActivity : AppCompatActivity() {
             }
         }
     }
+    private fun showCompletionWarning() {
+        AlertDialog.Builder(this)
+            .setTitle("Confirm Completion")
+            .setMessage(
+                "Only mark this errand as complete if you have already received the payment " +
+                        "from the requester.\n\n" +
+                        "Are you sure you want to proceed?"
+            )
+            .setPositiveButton("Yes, I received the payment") { _, _ ->
+                markAsComplete()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
 
     private fun confirmUnclaim() {
         AlertDialog.Builder(this)
@@ -233,6 +264,31 @@ class TaskDetailActivity : AppCompatActivity() {
             }
         }
     }
+    private fun updateCompletionUI() {
+
+        // Runner's own completion (this user)
+        if (runnerCompletedFlag) {
+            binding.completionStatusText.visibility = View.VISIBLE
+            binding.completionStatusText.text = "✓ You marked this as complete"
+            binding.markCompleteButton.visibility = View.GONE
+        } else {
+            binding.completionStatusText.visibility = View.GONE
+            binding.markCompleteButton.visibility = View.VISIBLE
+            binding.markCompleteButton.isEnabled = !clientCompleted
+        }
+
+        // Show requester completion status
+        if (clientCompleted) {
+            binding.requesterCompletionStatus.visibility = View.VISIBLE
+            binding.requesterCompletionStatus.text = "✓ Requester marked as complete"
+        } else {
+            binding.requesterCompletionStatus.visibility = View.GONE
+        }
+
+        // Runner shouldn't unclaim after requester marked complete
+        binding.unclaimButton.visibility = if (!clientCompleted) View.VISIBLE else View.GONE
+    }
+
 
     override fun onSupportNavigateUp(): Boolean {
         finish()
