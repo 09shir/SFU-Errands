@@ -37,6 +37,7 @@ class JobDetailActivity : AppCompatActivity() {
         val jobId = intent.getStringExtra("JOB_ID") // Get the ID
         val jobTitle = intent.getStringExtra("JOB_TITLE") ?: "No title"
         val jobDescription = intent.getStringExtra("JOB_DESCRIPTION") ?: "No description"
+        val jobCampus = intent.getStringExtra("JOB_CAMPUS") ?: "No Campus"
         val jobLocation = intent.getStringExtra("JOB_LOCATION") ?: "No location"
         val jobPayment = intent.getStringExtra("JOB_PAYMENT") ?: "$0.00"
         val mediaPaths = intent.getStringArrayListExtra("JOB_MEDIA_PATHS") ?: arrayListOf()
@@ -44,6 +45,7 @@ class JobDetailActivity : AppCompatActivity() {
         // Display job information
         binding.detailJobTitle.text = jobTitle
         binding.detailJobDescription.text = jobDescription
+        binding.detailJobCampus.text = jobCampus
         binding.detailJobLocation.text = jobLocation
         binding.detailJobPayment.text = jobPayment
 

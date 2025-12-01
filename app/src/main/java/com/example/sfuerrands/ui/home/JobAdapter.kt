@@ -19,7 +19,7 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
     class JobViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val titleTextView: TextView = itemView.findViewById(R.id.jobTitle)
         val descriptionTextView: TextView = itemView.findViewById(R.id.jobDescription)
-        val locationTextView: TextView = itemView.findViewById(R.id.jobLocation)
+        val campusTextView: TextView = itemView.findViewById(R.id.jobCampus)
         val paymentTextView: TextView = itemView.findViewById(R.id.jobPayment)
         val claimedBadge: TextView = itemView.findViewById(R.id.claimedBadge)
         val chatButton: ImageButton = itemView.findViewById(R.id.jobChatButton)
@@ -38,7 +38,7 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
 
         holder.titleTextView.text = job.title
         holder.descriptionTextView.text = job.description
-        holder.locationTextView.text = job.location
+        holder.campusTextView.text = job.campus
         holder.paymentTextView.text = job.payment
 
         holder.profileButton.visibility = View.VISIBLE
@@ -85,6 +85,7 @@ class JobAdapter(private var jobs: List<Job>) : RecyclerView.Adapter<JobAdapter.
                 intent.putExtra("JOB_TITLE", job.title)
                 intent.putExtra("JOB_DESCRIPTION", job.description)
                 intent.putExtra("JOB_LOCATION", job.location)
+                intent.putExtra("JOB_CAMPUS", job.campus)
                 intent.putExtra("JOB_PAYMENT", job.payment)
                 intent.putStringArrayListExtra("JOB_MEDIA_PATHS", ArrayList(job.mediaPaths))
                 holder.itemView.context.startActivity(intent)

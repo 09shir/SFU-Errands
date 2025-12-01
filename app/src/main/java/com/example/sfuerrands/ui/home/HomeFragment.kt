@@ -91,7 +91,8 @@ class HomeFragment : Fragment() {
                         title = e.title,
                         description = e.description,
                         // past data had lowercase campus names
-                        location = e.campus.replaceFirstChar{it.uppercaseChar()},
+                        campus = e.campus.replaceFirstChar{it.uppercaseChar()},
+                        location = e.location?:"N/A",
                         payment = e.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "$0.00",
                         mediaPaths = e.photoUrls,
                         requester = e.requesterId
@@ -101,7 +102,6 @@ class HomeFragment : Fragment() {
             },
             onError = { e ->
                 Log.e("HomeFragment", "Errands listen error", e)
-                // TODO: show an empty/error state if you have one
                 jobAdapter.submitList(emptyList())
             }
         )

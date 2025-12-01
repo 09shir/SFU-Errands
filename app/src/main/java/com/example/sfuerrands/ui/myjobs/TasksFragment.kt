@@ -170,7 +170,8 @@ class TasksFragment : Fragment() {
                 title = errand.title,
                 description = errand.description,
                 // past data had lowercase campus names
-                location = errand.campus.replaceFirstChar{it.uppercaseChar()},
+                campus = errand.campus.replaceFirstChar{it.uppercaseChar()},
+                location = errand.location?: "N/A",
                 payment = errand.priceOffered?.let { "$$it" } ?: "Free",
                 mediaPaths = errand.photoUrls,
                 isClaimed = errand.status == "claimed" || errand.runnerId != null,

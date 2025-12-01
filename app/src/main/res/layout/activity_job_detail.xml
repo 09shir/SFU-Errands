@@ -69,16 +69,40 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
 
+            <!-- Campus row -->
+            <TextView
+                android:id="@+id/campusLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Campus:"
+                android:textColor="@android:color/black"
+                android:textStyle="bold"
+                app:layout_constraintTop_toBottomOf="@id/detailJobDescription"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <TextView
+                android:id="@+id/detailJobCampus"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Burnaby"
+                android:textColor="@android:color/darker_gray"
+                app:layout_constraintStart_toEndOf="@id/campusLabel"
+                app:layout_constraintTop_toTopOf="@id/campusLabel"
+                app:layout_constraintBottom_toBottomOf="@id/campusLabel"
+                app:layout_constraintEnd_toEndOf="parent" />
+
             <!-- Location row -->
             <TextView
                 android:id="@+id/locationLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="12dp"
                 android:text="Location:"
                 android:textColor="@android:color/black"
                 android:textStyle="bold"
-                app:layout_constraintTop_toBottomOf="@id/detailJobDescription"
+                app:layout_constraintTop_toBottomOf="@id/campusLabel"
                 app:layout_constraintStart_toStartOf="parent" />
 
             <TextView
@@ -86,7 +110,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="Burnaby"
+                android:text="N/A"
                 android:textColor="@android:color/darker_gray"
                 app:layout_constraintStart_toEndOf="@id/locationLabel"
                 app:layout_constraintTop_toTopOf="@id/locationLabel"

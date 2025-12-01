@@ -7,6 +7,7 @@ data class Job(
     val title: String,
     val description: String,
     val location: String,
+    val campus: String,
     val payment: String,
     val mediaPaths: List<String> = emptyList(),
     val isClaimed: Boolean = false,
