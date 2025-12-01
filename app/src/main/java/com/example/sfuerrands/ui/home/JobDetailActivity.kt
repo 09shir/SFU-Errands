@@ -33,6 +33,14 @@ class JobDetailActivity : AppCompatActivity() {
         binding = ActivityJobDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Setup toolbar
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = "Job Details"
+        binding.toolbar.setNavigationOnClickListener {
+            finish()
+        }
+
         // Get job data passed from previous screen
         val jobId = intent.getStringExtra("JOB_ID") // Get the ID
         val jobTitle = intent.getStringExtra("JOB_TITLE") ?: "No title"
