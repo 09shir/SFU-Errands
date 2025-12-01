@@ -208,12 +208,16 @@ class RequestsFragment : Fragment() {
     }
 
     private fun updateJobsList() {
-        val jobs = currentErrands.map { errand ->
+        // Active first (clientCompletion == false), then completed
+        val active = currentErrands.filter { !it.clientCompletion }
+        val completed = currentErrands.filter { it.clientCompletion }
+        val ordered = active + completed
+
+        val jobs = ordered.map { errand ->
             Job(
                 id = errand.id,
                 title = errand.title,
                 description = errand.description,
-                // past data had lowercase campus names
                 campus = errand.campus.replaceFirstChar{it.uppercaseChar()},
                 location = errand.location?:"N/A",
                 payment = errand.priceOffered?.let { "$$it" } ?: "Free",
@@ -222,9 +226,11 @@ class RequestsFragment : Fragment() {
                 requester = errand.requesterId,
                 runner = errand.runnerId,
                 unreadMessageCount = unreadCounts[errand.id] ?: 0,
-                offers = errand.offers
+                offers = errand.offers,
+                isCompleted = errand.clientCompletion // completed from requester perspective
             )
         }
+
         jobAdapter.submitList(jobs)
     }
 
