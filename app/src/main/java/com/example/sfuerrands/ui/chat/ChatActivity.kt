@@ -33,20 +33,15 @@ class ChatActivity : AppCompatActivity() {
     private var errandTitle: String = ""
 
     private val selectedMedia = mutableListOf<Uri>()
-    private val maxMedia = 3
+    private val maxMedia = 1
 
     private val pickImages =
-        registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
-            if (uris.isNullOrEmpty()) return@registerForActivityResult
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            if (uri == null) return@registerForActivityResult
 
-            val remaining = maxMedia - selectedMedia.size
-            if (remaining <= 0) {
-                Toast.makeText(this, "Max $maxMedia images", Toast.LENGTH_SHORT).show()
-                return@registerForActivityResult
-            }
+            selectedMedia.clear()
+            selectedMedia.add(uri)
 
-            val toAdd = uris.take(remaining)
-            selectedMedia.addAll(toAdd)
             updateSelectedMediaUi()
         }
 
