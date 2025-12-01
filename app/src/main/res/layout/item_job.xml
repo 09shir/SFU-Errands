@@ -14,14 +14,12 @@
         android:clipChildren="false"
         android:padding="16dp">
 
-        <!-- Top Row: Title + Claimed Badge -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <!-- Job Title -->
             <TextView
                 android:id="@+id/jobTitle"
                 android:layout_width="0dp"
@@ -32,7 +30,6 @@
                 android:textStyle="bold"
                 android:textColor="@android:color/black" />
 
-            <!-- Claimed Badge -->
             <TextView
                 android:id="@+id/claimedBadge"
                 android:layout_width="wrap_content"
@@ -50,7 +47,6 @@
 
         </LinearLayout>
 
-        <!-- Job Description -->
         <TextView
             android:id="@+id/jobDescription"
             android:layout_width="match_parent"
@@ -135,6 +131,34 @@
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:textColor="#4CAF50" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/offerSelectionLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:visibility="gone">
+
+            <Spinner
+                android:id="@+id/offerSpinner"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:minHeight="48dp"
+                android:spinnerMode="dropdown" />
+
+            <Button
+                android:id="@+id/acceptOfferButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Accept"
+                android:textSize="12sp"
+                style="@style/Widget.MaterialComponents.Button" />
 
         </LinearLayout>
 

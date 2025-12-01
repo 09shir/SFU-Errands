@@ -74,8 +74,24 @@ class RequestsFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        // Create the adapter with empty list initially
-        jobAdapter = JobAdapter(emptyList())
+        // [CHANGE] Pass viewLifecycleOwner to the adapter so it can load offer data
+        jobAdapter = JobAdapter(emptyList(), viewLifecycleOwner)
+
+        jobAdapter.isRequesterMode = true // Enable offers dropdown for this screen
+
+        // Handle when requester accepts a runner offer
+        jobAdapter.onAcceptRunnerListener = { job, runnerRef ->
+            lifecycleScope.launch {
+                try {
+                    // Assign the runner to the errand in Firestore
+                    errandRepository.claimErrand(job.id, runnerRef.id)
+                    Toast.makeText(requireContext(), "Runner accepted!", Toast.LENGTH_SHORT).show()
+                    // The live listener will automatically update the UI to show it as claimed
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "Failed to accept runner: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
 
         // disable profile button visibility for requests without runner
         // show claimed badge for requests that's claimed
@@ -156,7 +172,7 @@ class RequestsFragment : Fragment() {
             ),
             onSuccess = { errands ->
                 currentErrands = errands
-                
+
                 // Remove old chat listeners that are no longer needed
                 val currentErrandIds = errands.map { it.id }.toSet()
                 chatListeners.keys.toList().forEach { errandId ->
@@ -166,7 +182,7 @@ class RequestsFragment : Fragment() {
                         unreadCounts.remove(errandId)
                     }
                 }
-                
+
                 // Set up real-time listeners for unread counts
                 errands.forEach { errand ->
                     if (!chatListeners.containsKey(errand.id)) {
@@ -177,7 +193,7 @@ class RequestsFragment : Fragment() {
                         chatListeners[errand.id] = listener
                     }
                 }
-                
+
                 // Initial update
                 updateJobsList()
             },
@@ -190,7 +206,7 @@ class RequestsFragment : Fragment() {
             }
         )
     }
-    
+
     private fun updateJobsList() {
         val jobs = currentErrands.map { errand ->
             Job(
@@ -205,7 +221,8 @@ class RequestsFragment : Fragment() {
                 isClaimed = errand.status == "claimed" || errand.runnerId != null,
                 requester = errand.requesterId,
                 runner = errand.runnerId,
-                unreadMessageCount = unreadCounts[errand.id] ?: 0
+                unreadMessageCount = unreadCounts[errand.id] ?: 0,
+                offers = errand.offers
             )
         }
         jobAdapter.submitList(jobs)

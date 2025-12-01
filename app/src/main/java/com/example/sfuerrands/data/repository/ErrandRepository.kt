@@ -8,6 +8,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.FieldValue
 import kotlinx.coroutines.tasks.await
 
 class ErrandRepository {
@@ -131,6 +132,19 @@ class ErrandRepository {
                 "claimedAt" to Timestamp.now()
             )
         )
+    }
+
+    /**
+     * Adds the current user (runner) to the offers list of an errand.
+     * Uses arrayUnion to ensure no duplicates are added.
+     */
+    suspend fun sendOffer(errandId: String, runnerUid: String) {
+        val runnerRef = db.collection("users").document(runnerUid)
+
+        // Atomically add the runner's reference to the 'offers' array
+        errandsCollection.document(errandId)
+            .update("offers", FieldValue.arrayUnion(runnerRef))
+            .await()
     }
 
 }
