@@ -48,12 +48,12 @@ class TasksFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
+        // Initially empty list
         jobAdapter = JobAdapter(emptyList())
 
-        // Custom click listener to open TaskDetailActivity
+        // Click -> TaskDetailActivity (same as before)
         jobAdapter.onJobClickListener = { job ->
             val errand = currentErrands.find { it.id == job.id }
-
             if (errand != null) {
                 val intent = Intent(requireContext(), TaskDetailActivity::class.java)
                 intent.putExtra("ERRAND_ID", errand.id)
@@ -70,7 +70,7 @@ class TasksFragment : Fragment() {
 
         binding.tasksRecyclerView.apply {
             layoutManager = LinearLayoutManager(context)
-            this.adapter = jobAdapter
+            adapter = jobAdapter
         }
     }
 
@@ -82,10 +82,8 @@ class TasksFragment : Fragment() {
             return
         }
 
-        // Create DocumentReference for current user
         val userRef = db.collection("users").document(currentUserId)
 
-        // Query errands where runnerId == current user
         val query = ErrandQuery(
             runnerId = userRef,
             orderByCreatedAtDesc = true
@@ -98,18 +96,23 @@ class TasksFragment : Fragment() {
                 Log.d("TasksFragment", "Got ${errands.size} tasks")
                 currentErrands = errands
 
-                // Map Errand → Job for display
-                val jobs = errands.map { errand ->
-                    Job(
-                        id = errand.id,
-                        title = errand.title,
-                        description = errand.description,
-                        location = errand.campus.replaceFirstChar { it.uppercase() },
-                        payment = errand.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "$0.00"
-                    )
-                }
+                // Split into active vs completed based on runnerCompletion
+                val active = errands.filter { !it.runnerCompletion }
+                val completed = errands.filter { it.runnerCompletion }
 
-                jobAdapter.submitList(jobs)
+                // Map Errand -> Job
+                val activeJobs = active.map { errandToJob(it) }
+                val completedJobs = completed.map { errandToJob(it) }
+
+                // Build sectioned list (simplest): header + items + header + items
+                val sectioned = mutableListOf<Any>()
+                sectioned.add("Active")
+                sectioned.addAll(activeJobs)
+                sectioned.add("Completed")
+                sectioned.addAll(completedJobs)
+
+                jobAdapter.showClaimedBadge = true
+                jobAdapter.submitList(sectioned)
             },
             onError = { e ->
                 Log.e("TasksFragment", "Tasks listen error", e)
@@ -117,6 +120,18 @@ class TasksFragment : Fragment() {
             }
         )
     }
+    private fun errandToJob(errand: Errand): Job {
+        return Job(
+            id = errand.id,
+            title = errand.title,
+            description = errand.description,
+            location = errand.campus.replaceFirstChar { it.uppercase() },
+            payment = errand.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "$0.00",
+            mediaPaths = errand.photoUrls,
+            isClaimed = errand.runnerId != null
+        )
+    }
+
 
     override fun onDestroyView() {
         super.onDestroyView()
