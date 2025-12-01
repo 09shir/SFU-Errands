@@ -55,7 +55,7 @@ class TaskDetailActivity : AppCompatActivity() {
         // Show completion status
         if (runnerCompletion) {
             binding.completionStatusText.visibility = View.VISIBLE
-            binding.completionStatusText.text = "✓ You marked this as complete"
+            binding.completionStatusText.text = "You marked this as complete"
             binding.markCompleteButton.isEnabled = false
             binding.markCompleteButton.text = "Already Marked Complete"
         } else {
