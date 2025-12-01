@@ -30,8 +30,6 @@ class RequestsFragment : Fragment() {
 
     private lateinit var jobAdapter: JobAdapter
     private var errandsListener: ListenerRegistration? = null
-
-    // Store the full Errand objects so we can pass them to EditJobActivity
     private var currentErrands: List<Errand> = emptyList()
 
     override fun onCreateView(
@@ -126,27 +124,39 @@ class RequestsFragment : Fragment() {
                 // Store the full Errand objects
                 currentErrands = errands
 
-                // Map Errand → Job for display
-                val jobs = errands.map { errand ->
-                    Job(
-                        id = errand.id,
-                        title = errand.title,
-                        description = errand.description,
-                        location = errand.campus.replaceFirstChar { it.uppercase() },
-                        payment = errand.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "$0.00",
-                        isClaimed = errand.runnerId != null  // NEW: Check if claimed
-                    )
-                }
+                val active = errands.filter { !it.clientCompletion }
+                val completed = errands.filter { it.clientCompletion }
+
+                val activeJobs = active.map { errandToJob(it) }
+                val completedJobs = completed.map { errandToJob(it) }
+
+                val sectioned = mutableListOf<Any>()
+                sectioned.add("Active")
+                sectioned.addAll(activeJobs)
+                sectioned.add("Completed")
+                sectioned.addAll(completedJobs)
 
                 // Enable claimed badge display in Requests tab
                 jobAdapter.showClaimedBadge = true
-
-                jobAdapter.submitList(jobs)
+                jobAdapter.submitList(sectioned)
             },
             onError = { e ->
                 Log.e("RequestsFragment", "Errands listen error", e)
                 jobAdapter.submitList(emptyList())
             }
+        )
+    }
+
+    private fun errandToJob(errand: Errand): Job {
+        // Map Errand → Job for display
+        return Job(
+            id = errand.id,
+            title = errand.title,
+            description = errand.description,
+            location = errand.campus.replaceFirstChar { it.uppercase() },
+            payment = errand.priceOffered?.let { "$${"%.2f".format(it)}" } ?: "$0.00",
+            mediaPaths = errand.photoUrls,
+            isClaimed = errand.runnerId != null
         )
     }
 
